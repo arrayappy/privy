@@ -5,26 +5,21 @@ import { Privy } from "../target/types/privy";
 import { expect } from 'chai';
 
 describe("privy", () => {
-  // Initialize the provider and set it as the default provider
   const provider = anchor.AnchorProvider.local();
   anchor.setProvider(provider);
 
-  // Define the program instance
   const program = anchor.workspace.Privy as Program<Privy>;
   console.log(program.programId.toString())
-  // Define the PDA for the privy config account
   const [privyConfigPDA, _] = PublicKey.findProgramAddressSync(
     [anchor.utils.bytes.utf8.encode('privy-config'), provider.wallet.publicKey.toBuffer()],
     program.programId
   );
   console.log('privyConfigPDA', privyConfigPDA.toString())
-  // Define user data for the tests
   const userData = {
     username: "arrayappy",
     passkey: "secret"
   };
 
-  // Define the PDA for the privy user account
   const [privyUserPDA, bump] = PublicKey.findProgramAddressSync(
     [
       anchor.utils.bytes.utf8.encode('privy-user'),
@@ -45,7 +40,6 @@ describe("privy", () => {
       })
       .rpc();
 
-    // Fetch and verify the privy config account data
     const configData = await program.account.privyConfig.fetch(privyConfigPDA);
     console.log(configData);
     expect(configData.tokensPerSol).to.equal(tokensPerSol);
@@ -101,7 +95,6 @@ describe("privy", () => {
       })
       .rpc();
 
-    // Fetch and verify the privy user account data after adding tokens
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData);
     const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * 10); // Initial deposit + additional SOL
@@ -126,10 +119,8 @@ describe("privy", () => {
 
   describe("Load testing for message insertion", function () {
     it("should insert the same message 10 times and fail on the 11th attempt", async () => {
-      // const program = anchor.workspace.Privy; 
       const message = "Should insert the same message 10 times and fail on the 11th attempt, should insert the same message 10 times and fail on the 11th attempt";
 
-      // Insert the same message 10 times
       for (let i = 0; i < 15; i++) {
         await program.methods.insertMessage(message)
           .accounts({

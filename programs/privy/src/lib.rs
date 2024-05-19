@@ -32,12 +32,6 @@ pub mod privy {
         let deposit_sol = deposit_lamports as f64 / LAMPORTS_PER_SOL as f64;
         let vector_size = (deposit_sol * privy_config.tokens_per_sol as f64).floor() as usize;
     
-        // msg!("deposit_lamports: {}", deposit_lamports);
-        // msg!("deposit_sol: {}", deposit_sol);
-        // msg!("tokens_per_sol: {}", privy_config.tokens_per_sol);
-        // msg!("vector_size: {}", vector_size);
- 
-    
         let computed_space = 8 +  // discriminator
             4 + username.len() +  // dynamic username length
             4 + passkey.len() +  // dynamic passkey length
@@ -54,9 +48,6 @@ pub mod privy {
         privy_user.token_limit = vector_size as u16;
         privy_user.computed_space = computed_space as u32;
     
-        // msg!("Creating user {} with deposit of {} lamports ({} SOL), resulting in token capacity of {}, computed space: {}", username, deposit_lamports, deposit_sol, vector_size, computed_space);
-    
-        // Transfer lamports from user to program
         let cpi_accounts = Transfer {
             from: ctx.accounts.user.to_account_info(),
             to: ctx.accounts.privy_user.to_account_info(),
@@ -64,9 +55,7 @@ pub mod privy {
         let cpi_program = ctx.accounts.system_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         system_program::transfer(cpi_context, deposit_lamports)?;
-    
-        // msg!("Transferred {} lamports from user to privy_user account", deposit_lamports);
-    
+
         Ok(())
     }
     
@@ -77,22 +66,13 @@ pub mod privy {
         let additional_sol = additional_lamports as f64 / LAMPORTS_PER_SOL as f64;
         let additional_tokens = (additional_sol * privy_config.tokens_per_sol as f64).floor() as usize;
     
-        // Update the token limit, ensuring it does not exceed the maximum allowed by the physical space
         let new_token_limit = privy_user.token_limit.checked_add(additional_tokens as u16).ok_or(CustomError::TokenLimitExceeded)?;
     
-        // Simulate an update to the computed_space for record-keeping (this would typically not be stored)
         let new_computed_space = privy_user.computed_space + (additional_tokens as u32 * 140); // Assuming each token is approx 140 bytes
-        // if new_computed_space > PrivyUser::USER_SPACE {
-        //     return Err(CustomError::SpaceLimitExceeded.into());
-        // }
     
         privy_user.token_limit = new_token_limit;
         privy_user.computed_space = new_computed_space;
-        // privy_user.tokens.reserve(new_token_limit as usize); // finalise
     
-        msg!("Adding {} lamports ({} SOL) to user account, resulting in additional token capacity of {}", additional_lamports, additional_sol, additional_tokens);
-    
-        // Transfer lamports from user to program
         let cpi_accounts = Transfer {
             from: ctx.accounts.user.to_account_info(),
             to: ctx.accounts.privy_user.to_account_info(),
@@ -100,8 +80,6 @@ pub mod privy {
         let cpi_program = ctx.accounts.system_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         system_program::transfer(cpi_context, additional_lamports)?;
-    
-        msg!("Transferred {} lamports from user to privy_user account", additional_lamports);
     
         Ok(())
     }
@@ -204,7 +182,7 @@ pub struct PrivyUser {
     pub disabled: bool,
     pub token_limit: u16,
     pub tokens: Vec<String>,
-    pub computed_space: u32,  // Stores the computed space needed at initialization
+    pub computed_space: u32,
     pub bump: u8,
 }
 
