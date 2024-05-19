@@ -72,21 +72,21 @@ describe("privy", () => {
     const depositLamports = 1 * anchor.web3.LAMPORTS_PER_SOL; // 1 SOL
 
     const tx = await program.methods
-        .createUser(userData.username, userData.passkey, new anchor.BN(depositLamports))
-        .accounts({
-            user: provider.wallet.publicKey,
-            privyUser: privyUserPDA,
-            privyConfig: privyConfigPDA,
-            systemProgram: SystemProgram.programId,
-        })
-        .rpc();
+      .createUser(userData.username, userData.passkey, new anchor.BN(depositLamports))
+      .accounts({
+        user: provider.wallet.publicKey,
+        privyUser: privyUserPDA,
+        privyConfig: privyConfigPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
 
     console.log('tx', tx)
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log("accountData", accountData);
     expect(accountData.username).to.equal(userData.username);
     expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * 10)); // Ensure tokens length is as expected
-});
+  });
 
 
   it("Add tokens", async () => {
@@ -108,4 +108,40 @@ describe("privy", () => {
     expect(accountData.tokenLimit).to.equal(expectedTokensLength); // Ensure the vector length is as expected
   });
 
+  // it("Insert message into vector", async () => {
+  //   // Ensure privy_config is initialized correctly before this test
+  //   await program.methods.insertMessage("Hi 1st message").accounts({
+  //     owner: provider.wallet.publicKey,
+  //     privyConfig: privyConfigPDA, // Now using privyConfig
+  //     privyUser: privyUserPDA,
+  //     systemProgram: SystemProgram.programId,
+  //   })
+  //   .rpc();
+
+  //   const accountData = await program.account.privyUser.fetch(privyUserPDA);
+  //   console.log(accountData);
+  //   expect(accountData.tokens.includes("Hi 1st message")).to.be.true; // Check if the message was added correctly
+  // })
+
+
+  describe("Load testing for message insertion", function () {
+    it("should insert the same message 10 times and fail on the 11th attempt", async () => {
+      // const program = anchor.workspace.Privy; 
+      const message = "Should insert the same message 10 times and fail on the 11th attempt, should insert the same message 10 times and fail on the 11th attempt";
+
+      // Insert the same message 10 times
+      for (let i = 0; i < 15; i++) {
+        await program.methods.insertMessage(message)
+          .accounts({
+            owner: provider.wallet.publicKey,
+            privyConfig: privyConfigPDA,
+            privyUser: privyUserPDA,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+      }
+      const accountData = await program.account.privyUser.fetch(privyUserPDA);
+      console.log(accountData);
+    })
+  });
 });
