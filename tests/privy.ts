@@ -97,6 +97,8 @@ describe("privy", () => {
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData);
+    const accountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
+    console.log('accountInfo', accountInfo)
     const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * 10); // Initial deposit + additional SOL
     expect(accountData.tokenLimit).to.equal(expectedTokensLength); // Ensure the vector length is as expected
   });

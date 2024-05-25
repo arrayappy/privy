@@ -37,8 +37,12 @@ pub mod privy {
             4 + passkey.len() +  // dynamic passkey length
             1 +  // disabled
             2 +  // token_limit
-            4 + (140 * vector_size) +  // dynamic tokens based on deposit
-            1;  // bump
+            1 +   // bump
+            4 + ((4+ 140) * vector_size);  // dynamic tokens based on deposit
+
+        let account_info = &mut privy_user.to_account_info();
+        account_info.realloc(computed_space as usize, true)?; 
+
     
         privy_user.username = username;
         privy_user.passkey = passkey;
@@ -46,7 +50,8 @@ pub mod privy {
         privy_user.bump = ctx.bumps.privy_user;
         privy_user.tokens = Vec::with_capacity(vector_size);
         privy_user.token_limit = vector_size as u16;
-        privy_user.computed_space = computed_space as u32;
+        privy_user.compute_space = computed_space as u32;
+        privy_user.total_sol = privy_user.get_lamports() as f64;
     
         let cpi_accounts = Transfer {
             from: ctx.accounts.user.to_account_info(),
@@ -55,7 +60,7 @@ pub mod privy {
         let cpi_program = ctx.accounts.system_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         system_program::transfer(cpi_context, deposit_lamports)?;
-
+    
         Ok(())
     }
     
@@ -67,19 +72,25 @@ pub mod privy {
         let additional_tokens = (additional_sol * privy_config.tokens_per_sol as f64).floor() as usize;
     
         let new_token_limit = privy_user.token_limit.checked_add(additional_tokens as u16).ok_or(CustomError::TokenLimitExceeded)?;
-    
-        let new_computed_space = privy_user.computed_space + (additional_tokens as u32 * 140); // Assuming each token is approx 140 bytes
+        let new_computed_space = privy_user.compute_space + (additional_tokens as u32 * (4 + 140));
     
         privy_user.token_limit = new_token_limit;
-        privy_user.computed_space = new_computed_space;
+        privy_user.compute_space = new_computed_space;
+        privy_user.total_sol = privy_user.get_lamports() as f64;
+        privy_user.tokens.reserve(new_token_limit as usize); // finalise
     
-        let cpi_accounts = Transfer {
+        let account_info = &mut privy_user.to_account_info();
+        account_info.realloc(new_computed_space as usize, true)?; 
+
+        let cpi_accounts = Transfer { // todo Transfer vs add_lamports
             from: ctx.accounts.user.to_account_info(),
             to: ctx.accounts.privy_user.to_account_info(),
         };
         let cpi_program = ctx.accounts.system_program.to_account_info();
         let cpi_context = CpiContext::new(cpi_program, cpi_accounts);
         system_program::transfer(cpi_context, additional_lamports)?;
+    
+        msg!("Transferred {} lamports from user to privy_user account", additional_lamports);
     
         Ok(())
     }
@@ -137,14 +148,7 @@ pub struct CreateUser<'info> {
 pub struct AddTokens<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
-    #[account(
-        mut,
-        seeds = [b"privy-user", user.key().as_ref()],
-        bump,
-        realloc = PrivyUser::USER_SPACE + (10 * 140),
-        realloc::payer = user,
-        realloc::zero = false,
-    )]
+    #[account(mut)]
     pub privy_user: Account<'info, PrivyUser>,
     pub privy_config: Account<'info, PrivyConfig>,
     pub system_program: Program<'info, System>,
@@ -182,7 +186,8 @@ pub struct PrivyUser {
     pub disabled: bool,
     pub token_limit: u16,
     pub tokens: Vec<String>,
-    pub computed_space: u32,
+    pub total_sol: f64,
+    pub compute_space: u32, 
     pub bump: u8,
 }
 
@@ -192,7 +197,6 @@ impl PrivyUser {
     4 + 24 +  // passkey
     1 +  // disabled
     2 +  // token_limit
-    4 + (140 * 10) +  // tokens
     1;  // bump
 }
 
@@ -200,8 +204,6 @@ impl PrivyUser {
 pub enum CustomError {
     #[msg("Unauthorized.")]
     Unauthorized,
-    #[msg("Bump value not found.")]
-    BumpNotFound,
     #[msg("Token limit exceeded")]
     TokenLimitExceeded,
 }
