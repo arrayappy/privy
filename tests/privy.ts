@@ -30,7 +30,7 @@ describe("privy", () => {
 
 
   it("Initialize Privy Config", async () => {
-    const tokensPerSol = 10;
+    const tokensPerSol = 80;
     await program.methods
       .initializePrivyConfig(tokensPerSol)
       .accounts({
@@ -78,6 +78,10 @@ describe("privy", () => {
     console.log('tx', tx)
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log("accountData", accountData);
+    const privyAccountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
+    console.log('privyAccountInfo', privyAccountInfo)
+    const configAccountInfo = await program.account.privyConfig.getAccountInfo(privyConfigPDA)
+    console.log('configAccountInfo', configAccountInfo)
     expect(accountData.username).to.equal(userData.username);
     expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * 10)); // Ensure tokens length is as expected
   });
@@ -97,8 +101,10 @@ describe("privy", () => {
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData);
-    const accountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
-    console.log('accountInfo', accountInfo)
+    const privyAccountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
+    console.log('privyAccountInfo', privyAccountInfo)
+    const configAccountInfo = await program.account.privyConfig.getAccountInfo(privyConfigPDA)
+    console.log('configAccountInfo', configAccountInfo)
     const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * 10); // Initial deposit + additional SOL
     expect(accountData.tokenLimit).to.equal(expectedTokensLength); // Ensure the vector length is as expected
   });
