@@ -1,11 +1,8 @@
-[toolchain]
-
 [features]
-resolution = true
+seeds = false
 skip-lint = false
-
 [programs.localnet]
-privy = "DRpfXBx35Z5QDTnQzV756avabprLWqfbbo3jxAa66ThD"
+privy = "priHJ6iTp11dw7nU8QoFZ4msaEMyk6GnBKfvV3rpNE5"
 
 [registry]
 url = "https://api.apr.dev"

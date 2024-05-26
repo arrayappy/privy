@@ -3,7 +3,7 @@ use anchor_lang::system_program::{self, Transfer};
 use anchor_lang::solana_program::pubkey::Pubkey;
 use anchor_lang::solana_program::sysvar::rent::Rent;
 
-declare_id!("GW79qwoxeZLoyN1wBwDmJ19CjmqsL5rD44jBDCRnvyie");
+declare_id!("priHJ6iTp11dw7nU8QoFZ4msaEMyk6GnBKfvV3rpNE5");
 
 const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
