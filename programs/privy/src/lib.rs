@@ -47,10 +47,6 @@ pub mod privy {
         let privy_user_lamports = rent.minimum_balance(computed_space);
         let privy_config_lamports = deposit_lamports.saturating_sub(privy_user_lamports);
 
-        let account_info = &mut privy_user.to_account_info();
-        account_info.realloc(computed_space as usize, true)?; 
-
-    
         privy_user.username = username;
         privy_user.passkey = passkey;
         privy_user.disabled = false;
@@ -77,6 +73,13 @@ pub mod privy {
         Ok(())
     }
     
+    pub fn allocate_space(ctx: Context<AllocateSpace>, computed_space: u32) -> Result<()> {
+        let privy_user = &mut ctx.accounts.privy_user;
+        privy_user.compute_space = privy_user.compute_space.checked_add(computed_space).unwrap();
+        msg!("{}", privy_user.compute_space);
+        ctx.accounts.privy_user.to_account_info().realloc(computed_space as usize, false)?;
+        Ok(())
+    }
 
     pub fn add_tokens(ctx: Context<AddTokens>, additional_lamports: u64,) -> Result<()> {
         let user = &mut ctx.accounts.user;
@@ -136,7 +139,7 @@ pub struct InitializePrivyConfig<'info> {
         init,
         payer = owner,
         space = PrivyConfig::CONFIG_SPACE,
-        seeds = [b"privy-config", owner.key().as_ref()],
+        seeds = [b"privy-config"],
         bump
     )]
     pub privy_config: Account<'info, PrivyConfig>,
@@ -180,6 +183,15 @@ pub struct AddTokens<'info> {
     #[account(mut)]
     pub privy_config: Account<'info, PrivyConfig>,
     pub rent: Sysvar<'info, Rent>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct AllocateSpace<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut)]
+    pub privy_user: Account<'info, PrivyUser>,
     pub system_program: Program<'info, System>,
 }
 
