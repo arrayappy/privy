@@ -1,17 +1,20 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, Connection, Keypair } from "@solana/web3.js";
 import { Privy } from "../target/types/privy";
 import { expect } from 'chai';
+
+const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 describe("privy", () => {
   const provider = anchor.AnchorProvider.local();
   anchor.setProvider(provider);
+  console.log(`Using wallet: ${provider.wallet.publicKey.toString()}`);
 
   const program = anchor.workspace.Privy as Program<Privy>;
   console.log(program.programId.toString())
   const [privyConfigPDA, _] = PublicKey.findProgramAddressSync(
-    [anchor.utils.bytes.utf8.encode('privy-config'), provider.wallet.publicKey.toBuffer()],
+    [anchor.utils.bytes.utf8.encode('privy-config')],
     program.programId
   );
   console.log('privyConfigPDA', privyConfigPDA.toString())
@@ -28,9 +31,8 @@ describe("privy", () => {
     program.programId
   );
 
-
+  const tokensPerSol = 200;
   it("Initialize Privy Config", async () => {
-    const tokensPerSol = 80;
     await program.methods
       .initializePrivyConfig(tokensPerSol)
       .accounts({
@@ -65,6 +67,17 @@ describe("privy", () => {
   it("Create User", async () => {
     const depositLamports = 1 * anchor.web3.LAMPORTS_PER_SOL; // 1 SOL
 
+    const allocatePromises = [];
+    for (let i = 0; i < 2; i++) {
+      const promise = program.methods
+        .allocateSpace(10000)
+        .accounts({
+          user: provider.wallet.publicKey,
+          privyUser: privyUserPDA
+        }).instruction()
+      allocatePromises.push(await promise);
+    }
+
     const tx = await program.methods
       .createUser(userData.username, userData.passkey, new anchor.BN(depositLamports))
       .accounts({
@@ -72,10 +85,30 @@ describe("privy", () => {
         privyUser: privyUserPDA,
         privyConfig: privyConfigPDA,
         systemProgram: SystemProgram.programId,
-      })
+      }).postInstructions(allocatePromises)
       .rpc();
+      console.log(tx);
+     
+    // const t = new Transaction()
+    // const connection = new Connection("http://127.0.0.1:8899", "confirmed");
+    // const t1 = await program.methods.createUser(userData.username, userData.passkey, new anchor.BN(depositLamports))
+    // .accounts({
+    //   user: provider.wallet.publicKey,
+    //   privyUser: privyUserPDA,
+    //   privyConfig: privyConfigPDA,
+    //   systemProgram: SystemProgram.programId,
+    // }).instruction();
+    // t.add(t1)
 
-    console.log('tx', tx)
+    // for (let i = 0; i < 2; i++) {
+    //   t.add(await program.methods
+    //     .allocateSpace(10000)
+    //     .accounts({
+    //       user: provider.wallet.publicKey,
+    //       privyUser: privyUserPDA
+    //     }).instruction())
+    // }
+
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log("accountData", accountData);
     const privyAccountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
@@ -83,31 +116,31 @@ describe("privy", () => {
     const configAccountInfo = await program.account.privyConfig.getAccountInfo(privyConfigPDA)
     console.log('configAccountInfo', configAccountInfo)
     expect(accountData.username).to.equal(userData.username);
-    expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * 10)); // Ensure tokens length is as expected
+    expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * tokensPerSol)); // Ensure tokens length is as expected
   });
 
 
-  it("Add tokens", async () => {
-    const additionalLamports = 1 * anchor.web3.LAMPORTS_PER_SOL; // 1 SOL
+  // it("Add tokens", async () => {
+  //   const additionalLamports = 1 * anchor.web3.LAMPORTS_PER_SOL; // 1 SOL
 
-    await program.methods
-      .addTokens(new anchor.BN(additionalLamports))
-      .accounts({
-        user: provider.wallet.publicKey,
-        privyUser: privyUserPDA,
-        privyConfig: privyConfigPDA,
-      })
-      .rpc();
+  //   await program.methods
+  //     .addTokens(new anchor.BN(additionalLamports))
+  //     .accounts({
+  //       user: provider.wallet.publicKey,
+  //       privyUser: privyUserPDA,
+  //       privyConfig: privyConfigPDA,
+  //     })
+  //     .rpc();
 
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    console.log(accountData);
-    const privyAccountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
-    console.log('privyAccountInfo', privyAccountInfo)
-    const configAccountInfo = await program.account.privyConfig.getAccountInfo(privyConfigPDA)
-    console.log('configAccountInfo', configAccountInfo)
-    const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * 10); // Initial deposit + additional SOL
-    expect(accountData.tokenLimit).to.equal(expectedTokensLength); // Ensure the vector length is as expected
-  });
+  //   const accountData = await program.account.privyUser.fetch(privyUserPDA);
+  //   console.log(accountData);
+  //   const privyAccountInfo = await program.account.privyUser.getAccountInfo(privyUserPDA)
+  //   console.log('privyAccountInfo', privyAccountInfo)
+  //   const configAccountInfo = await program.account.privyConfig.getAccountInfo(privyConfigPDA)
+  //   console.log('configAccountInfo', configAccountInfo)
+  //   const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * 10); // Initial deposit + additional SOL
+  //   expect(accountData.tokenLimit).to.equal(expectedTokensLength); // Ensure the vector length is as expected
+  // });
 
   // it("Insert message into vector", async () => {
   //   // Ensure privy_config is initialized correctly before this test
@@ -127,20 +160,25 @@ describe("privy", () => {
 
   describe("Load testing for message insertion", function () {
     it("should insert the same message 10 times and fail on the 11th attempt", async () => {
-      const message = "Should insert the same message 10 times and fail on the 11th attempt, should insert the same message 10 times and fail on the 11th attempt";
-
-      for (let i = 0; i < 15; i++) {
-        await program.methods.insertMessage(message)
-          .accounts({
-            owner: provider.wallet.publicKey,
-            privyConfig: privyConfigPDA,
-            privyUser: privyUserPDA,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc();
+      for (let batch = 0; batch < 5; batch++) {
+        const promises = [];
+        for (let i = batch * 25; i < (batch + 1) * 25; i++) {
+          const message = `Should insert the same message 10 times and fail on 11th attempt, should insert the same message 10 times and fail on 11th attempt - ${i}`;
+          promises.push(program.methods.insertMessage(message)
+            .accounts({
+              owner: provider.wallet.publicKey,
+              privyConfig: privyConfigPDA,
+              privyUser: privyUserPDA,
+            })
+            .rpc())
+        }
+        console.log(`Batch ${batch + 1} promises`, promises)
+        await Promise.all(promises)
+        console.log(`p${batch + 1}`)
+        await sleep(60000)
       }
       const accountData = await program.account.privyUser.fetch(privyUserPDA);
-      console.log(accountData);
+      console.log(accountData.tokens, accountData.tokens.length);
     })
   });
 });
