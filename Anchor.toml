@@ -1,6 +1,9 @@
+[toolchain]
+
 [features]
-seeds = false
+resolution = true
 skip-lint = false
+
 [programs.localnet]
 privy = "priHJ6iTp11dw7nU8QoFZ4msaEMyk6GnBKfvV3rpNE5"
 
