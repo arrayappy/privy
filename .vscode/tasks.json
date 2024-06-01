@@ -18,7 +18,7 @@
             "command": "solana-test-validator -r",
             "isBackground": true,
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${env:HOME}"
             },
             "presentation": {
                 "panel": "dedicated",
