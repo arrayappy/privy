@@ -1,0 +1,6 @@
+CREATE TABLE usernames (
+    user_addr VARCHAR PRIMARY KEY,
+    user_name VARCHAR NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
