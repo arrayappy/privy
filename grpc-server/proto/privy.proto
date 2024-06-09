@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package privy;
+
+service PrivyService {
+  rpc GetUserByAddr (GetUserByAddrReq) returns (GetUserRes);
+  rpc GetUserByName (GetUserByNameReq) returns (GetUserRes);
+  rpc InsertMessageToUser (InsertMessageToUserReq) returns (InsertMessageToUserRes);
+}
+
+message GetUserByAddrReq {
+  string user_addr = 1;
+}
+
+message GetUserByNameReq {
+  string user_name = 1;
+}
+
+message GetUserRes {
+  string user_addr = 1;
+  string user_name = 2;
+  string created_at = 3;
+  string updated_at = 4;
+}
+
+message InsertMessageToUserReq {
+  string user_name = 1;
+  string message = 2;
+}
+
+message InsertMessageToUserRes {
+  bool success = 1;
+}
