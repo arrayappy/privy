@@ -5,7 +5,10 @@ package privy;
 service PrivyService {
   rpc GetUserByAddr (GetUserByAddrReq) returns (GetUserRes);
   rpc GetUserByName (GetUserByNameReq) returns (GetUserRes);
-  rpc InsertMessageToUser (InsertMessageToUserReq) returns (InsertMessageToUserRes);
+  rpc InsertMessage (InsertMessageReq) returns (SuccessRes);
+  rpc CreateUser (CreateOrUpdateUserReq) returns (SuccessRes);
+  rpc UpdateUser (CreateOrUpdateUserReq) returns (SuccessRes);
+  rpc DeleteUser (DeleteUserReq) returns (SuccessRes);
 }
 
 message GetUserByAddrReq {
@@ -23,11 +26,20 @@ message GetUserRes {
   string updated_at = 4;
 }
 
-message InsertMessageToUserReq {
-  string user_name = 1;
+message InsertMessageReq {
+  string user_addr = 1;
   string message = 2;
 }
 
-message InsertMessageToUserRes {
+message CreateOrUpdateUserReq {
+  string user_addr = 1;
+  string user_name = 2;
+}
+
+message DeleteUserReq {
+  string user_addr = 1;
+}
+
+message SuccessRes {
   bool success = 1;
 }

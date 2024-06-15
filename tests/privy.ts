@@ -29,6 +29,8 @@ const [privyUserPDA, bump] = PublicKey.findProgramAddressSync(
   program.programId
 );
 
+console.log('provider', provider.wallet.publicKey)
+
 const tokensPerSol = 50;
 const newTokensPerSol = 100;
 
@@ -91,9 +93,9 @@ describe("Privy User", () => {
       .rpc();
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    // console.log("accountData", accountData);
+    console.log("accountData", accountData);
     const privyUser = await program.account.privyUser.getAccountInfo(privyUserPDA);
-    // console.log(privyUser)
+    console.log(privyUser)
     expect(accountData.username).to.equal(userData.username);
     expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * newTokensPerSol));
   });

@@ -1,21 +1,33 @@
 use crate::db::models;
 
 use diesel::prelude::*;
-use dotenvy::dotenv;
-use std::env;
 
 use self::models::{NewUser, UpdatedUser, User};
 use crate::db::schema::usernames::dsl::*;
 
-pub fn establish_connection() -> PgConnection {
-    dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+pub fn get_user_row_by_addr(
+    conn: &mut PgConnection,
+    addr: &str
+) -> Option<User> {
+    usernames
+        .filter(user_addr.eq(addr))
+        .first(conn)
+        .optional()
+        .expect("Error loading user")
 }
 
-pub fn create_user(
+pub fn get_user_by_row_name(
+    conn: &mut PgConnection,
+    name: &str
+) -> Option<User> {
+    usernames
+        .filter(user_name.eq(name))
+        .first(conn)
+        .optional()
+        .expect("Error getting user by addr")
+}
+
+pub fn create_user_row(
     conn: &mut PgConnection,
     new_user: NewUser
 ) -> usize {
@@ -25,12 +37,7 @@ pub fn create_user(
         .expect("Error saving new user")
 }
 
-pub fn get_all_users(conn: &mut PgConnection) -> Vec<User> {
-    usernames.load::<User>(conn)
-        .expect("Error loading users")
-}
-
-pub fn update_user(
+pub fn update_user_row(
     conn: &mut PgConnection,
     _user_addr: &str,
     updated_user: UpdatedUser
@@ -41,7 +48,10 @@ pub fn update_user(
         .expect("Error updating user")
 }
 
-pub fn delete_user(conn: &mut PgConnection, addr: &str) -> QueryResult<usize> {
+pub fn delete_user_row(
+    conn: &mut PgConnection,
+    addr: &str
+) -> QueryResult<usize> {
     diesel::delete(usernames.filter(user_addr.eq(addr)))
         .execute(conn)
 }
