@@ -174,3 +174,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+// use std::str::FromStr;
+
+// use anchor_client::solana_sdk::pubkey::Pubkey;
+// use solana::client::insert_message_anchor;
+// mod solana;
+
+// #[tokio::main]
+// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//     // let user_addr = Pubkey::new_unique();
+//     let user_addr: Pubkey = Pubkey::from_str("rusQnt24KNvkFkZmHopzrW9J1BNSBHK9tdu34ecY3fr")?;
+//     insert_message_anchor(&user_addr).await?;
+//     println!("Message inserted successfully");
+//     Ok(())
+// }
