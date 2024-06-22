@@ -100,10 +100,10 @@ describe("Privy User", () => {
     expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports / anchor.web3.LAMPORTS_PER_SOL * newTokensPerSol));
   });
 
-  it("Update User", async () => {
+  it("Update Username", async () => {
     const newUsername = "naidu";
     await program.methods
-      .updateUser(newUsername, userData.passkey, false)
+      .updateUsername(newUsername)
       .accounts({
         privyUser: privyUserPDA,
         systemProgram: SystemProgram.programId,
@@ -161,18 +161,89 @@ describe("Privy Admin", () => {
   })
 
   it("Insert message into messages vector", async () => {
-    await program.methods.insertMessage("Hi 1st message").accounts({
+    const catIdx = 0;
+    const passkey = "secret";
+    const message = "hi";
+    await program.methods.insertMessage(catIdx, passkey, message).accounts({
       owner: provider.wallet.publicKey,
-      privyConfig: privyConfigPDA, // Now using privyConfig
+      privyConfig: privyConfigPDA,
       privyUser: privyUserPDA,
       systemProgram: SystemProgram.programId,
     })
     .rpc();
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    expect(accountData.messages.includes("Hi 1st message")).to.be.true;
+    console.log(accountData)
+    expect(accountData.messages.includes("0:hi")).to.be.true;
   })
 
+});
+
+describe("Privy User Categories", () => {
+
+  it("Create Category", async () => {
+    const catName = "General";
+    const passkey = "secret_passkey";
+    const enabled = true;
+    const singleMsg = false;
+
+    await program.methods
+      .createCategory(catName, passkey, enabled, singleMsg)
+      .accounts({
+        privyUser: privyUserPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    
+    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    console.log(accountData)
+    const category = accountData.categories[1];
+    expect(category.catName).to.equal(catName);
+    expect(category.passkey).to.equal(passkey);
+    expect(category.enabled).to.equal(enabled);
+    expect(category.singleMsg).to.equal(singleMsg);
+  });
+
+  it("Update Category", async () => {
+    const catIdx = 1;
+    const newCatName = "Updated General";
+    const newPasskey = "new_secret_passkey";
+    const enabled = false;
+    const singleMsg = true;
+
+    await program.methods
+      .updateCategory(catIdx, newCatName, newPasskey, enabled, singleMsg)
+      .accounts({
+        privyUser: privyUserPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    
+    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const category = accountData.categories[1];
+    expect(category.catName).to.equal(newCatName);
+    expect(category.passkey).to.equal(newPasskey);
+    expect(category.enabled).to.equal(enabled);
+    expect(category.singleMsg).to.equal(singleMsg);
+  });
+
+  it("Delete Category", async () => {
+    const catIdx = 1;
+
+    await program.methods
+      .deleteCategory(catIdx)
+      .accounts({
+        privyUser: privyUserPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+    
+    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const category = accountData.categories[1];
+    expect(category).to.be.null;
+  });
+  
+});
 
   // describe("Load testing for message insertion", function () {
   //   it("should insert the same message 10 times and fail on the 11th attempt", async () => {
@@ -197,4 +268,3 @@ describe("Privy Admin", () => {
   //     console.log(accountData.messages, accountData.messages.length);
   //   })
   // });
-});
