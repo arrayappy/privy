@@ -9,6 +9,7 @@ const LAMPORTS_PER_SOL: u64 = 1_000_000_000;
 
 #[program]
 pub mod privy {
+
     use super::*;
 
     pub fn initialize_privy_config(ctx: Context<InitializePrivyConfig>, tokens_per_sol: u32) -> Result<()> {
@@ -43,24 +44,28 @@ pub mod privy {
         let deposit_sol = deposit_lamports as f64 / LAMPORTS_PER_SOL as f64;
         let vector_size = (deposit_sol * privy_config.tokens_per_sol as f64).floor() as usize;
     
-        let computed_space = 8 +  // discriminator
-            4 + username.len() +  // dynamic username length
-            4 + passkey.len() +  // dynamic passkey length
-            1 +  // disabled
-            2 +  // token_limit
-            1 +   // bump
-            4 + ((4+ 140) * vector_size);  // dynamic tokens based on deposit
+        let computed_space = 8 +
+            4 + 32 +
+            2 +
+            4 + 1 * (4 + 32 + 32 + 1 + 1) +
+            4 + ((4+ 140 + 3) * vector_size) +
+            1;
 
         let rent = &ctx.accounts.rent;
         let privy_user_lamports = rent.minimum_balance(computed_space);
         let privy_config_lamports = deposit_lamports.saturating_sub(privy_user_lamports);
 
         privy_user.username = username;
-        privy_user.passkey = passkey;
-        privy_user.disabled = false;
         privy_user.bump = ctx.bumps.privy_user;
         privy_user.messages = Vec::with_capacity(vector_size);
         privy_user.token_limit = vector_size as u16;
+
+        privy_user.categories = vec![Some(Category {
+            cat_name: String::new(),
+            passkey: passkey.clone(),
+            enabled: true,
+            single_msg: false,
+        })];
     
         let cpi_accounts = Transfer {
             from: user.to_account_info(),
@@ -79,11 +84,9 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn update_user(ctx: Context<UpdateUser>, username: String, passkey: String, disabled: bool) -> Result<()> {
+    pub fn update_username(ctx: Context<UpdateUser>, username: String) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
         privy_user.username = username;
-        privy_user.passkey = passkey;
-        privy_user.disabled = disabled;
         Ok(())
     }
     
@@ -128,10 +131,84 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn insert_message(ctx: Context<InsertMessage>, message: String) -> Result<()> {
+    pub fn insert_message(ctx: Context<InsertMessage>, cat_idx: u32, passkey: String, message: String) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
-        require!(!privy_user.disabled, CustomError::MessagesDisabled);
-        privy_user.messages.push(message);
+
+        require!(privy_user.categories.len() > cat_idx as usize, CustomError::InvalidCategoryIndex);
+
+        let cat_config = privy_user.categories[cat_idx as usize]
+        .as_ref()
+        .ok_or(CustomError::CategoryNotFound)?
+        .clone();
+
+        require!(privy_user.token_limit > 0, CustomError::TokenLimitExceeded);
+        require!(cat_config.passkey == passkey, CustomError::InvalidPasskey);
+        require!(cat_config.enabled, CustomError::CategoryDisabled);
+
+        let message_with_cat_idx = format!("{}:{}", cat_idx, message);
+        privy_user.messages.push(message_with_cat_idx);
+
+        privy_user.token_limit = privy_user.token_limit.checked_sub(1).ok_or(CustomError::MessagesDisabled)?;
+        
+        Ok(())
+    }
+
+    pub fn create_category(
+        ctx: Context<CategoryCtx>, 
+        cat_name: String, 
+        passkey: String, 
+        enabled: bool, 
+        single_msg: bool
+    ) -> Result<()> {
+        let privy_user = &mut ctx.accounts.privy_user;
+
+        let cat_idx = privy_user.categories.len();
+        privy_user.categories.resize_with(cat_idx + 1, || None);
+    
+        privy_user.categories[cat_idx as usize] = Some(Category {
+            cat_name,
+            passkey,
+            enabled,
+            single_msg,
+        });
+
+        Ok(())
+    }
+
+    pub fn update_category(
+        ctx: Context<CategoryCtx>, 
+        cat_idx: u32, 
+        cat_name: String, 
+        passkey: String, 
+        enabled: bool, 
+        single_msg: bool
+    ) -> Result<()> {
+        let privy_user = &mut ctx.accounts.privy_user;
+
+        require!(privy_user.categories.len() > cat_idx as usize, CustomError::InvalidCategoryIndex);
+        require!(privy_user.categories[cat_idx as usize].is_some(), CustomError::CategoryNotFound);
+
+        privy_user.categories[cat_idx as usize] = Some(Category {
+            cat_name,
+            passkey,
+            enabled,
+            single_msg,
+        });
+
+        Ok(())
+    }
+
+    pub fn delete_category(
+        ctx: Context<CategoryCtx>, 
+        cat_idx: u32
+    ) -> Result<()> {
+        let privy_user = &mut ctx.accounts.privy_user;
+        
+        require!(cat_idx != 0, CustomError::InvalidCategoryIndex);
+        require!(privy_user.categories.len() > cat_idx as usize, CustomError::InvalidCategoryIndex);
+        require!(privy_user.categories[cat_idx as usize].is_some(), CustomError::CategoryNotFound);
+    
+        privy_user.categories[cat_idx as usize] = None;
         Ok(())
     }
 }
@@ -212,6 +289,14 @@ pub struct UpdateUser<'info> {
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+pub struct CategoryCtx<'info> {
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(mut)]
+    pub privy_user: Account<'info, PrivyUser>,
+    pub system_program: Program<'info, System>,
+}
 
 #[derive(Accounts)]
 pub struct AllocateSpace<'info> {
@@ -242,28 +327,34 @@ pub struct PrivyConfig {
 }
 
 impl PrivyConfig {
-    const CONFIG_SPACE: usize = 8 + // discriminator
-    32 + // owner
-    4; // tokens_per_sol
+    const CONFIG_SPACE: usize = 8 +
+    32 +
+    4;
+}
+
+#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
+pub struct Category {
+    pub cat_name: String,  // None for no category
+    pub passkey: String,
+    pub enabled: bool,
+    pub single_msg: bool,
 }
 
 #[account]
 pub struct PrivyUser {
     pub username: String,
-    pub passkey: String,
-    pub disabled: bool,
     pub token_limit: u16,
+    pub categories: Vec<Option<Category>>,
     pub messages: Vec<String>,
     pub bump: u8,
 }
 
 impl PrivyUser {
-    const USER_SPACE: usize = 8 +  // discriminator
-    4 + 24 +  // username
-    4 + 24 +  // passkey
-    1 +  // disabled
-    2 +  // token_limit
-    1;  // bump
+    const USER_SPACE: usize = 8 +
+        4 + 32 +
+        2 +
+        4 + 1 * (4 + 32 + 32 + 1 + 1) +
+        1;
 }
 
 #[error_code]
@@ -274,4 +365,14 @@ pub enum CustomError {
     TokenLimitExceeded,
     #[msg("Disabled receiving messages.")]
     MessagesDisabled,
+    #[msg("Invalid category index")]
+    InvalidCategoryIndex,
+    #[msg("Token limit underflow")]
+    TokenLimitUnderflow,
+    #[msg("Category not found")]
+    CategoryNotFound,
+    #[msg("Invalid passkey")]
+    InvalidPasskey,
+    #[msg("Category disabled")]
+    CategoryDisabled,
 }
