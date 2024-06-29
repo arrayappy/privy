@@ -1,9 +1,11 @@
-use crate::db::models;
+use serde_json;
 
 use diesel::prelude::*;
-
-use self::models::{NewUser, UpdatedUser, User};
+use crate::db::models;
 use crate::db::schema::usernames::dsl::*;
+use self::models::{NewUser, UpdatedUser, User};
+use crate::db::schema::fingerprints::dsl::*;
+use self::models::Fingerprint;
 
 pub fn get_user_row_by_addr(
     conn: &mut PgConnection,
@@ -54,4 +56,53 @@ pub fn delete_user_row(
 ) -> QueryResult<usize> {
     diesel::delete(usernames.filter(user_addr.eq(addr)))
         .execute(conn)
+}
+
+pub fn get_fingerprint_categories(
+    conn: &mut PgConnection,
+    fingerprint_id: &str
+) -> Option<(String, Vec<String>)> {
+    fingerprints
+        .filter(id.eq(fingerprint_id))
+        .first::<Fingerprint>(conn)
+        .optional()
+        .expect("Error loading fingerprint")
+        .map(|fp: Fingerprint| (fp.id.clone(), fp.to_user_categories_vec()))
+}
+
+pub fn append_fingerprint(
+    conn: &mut PgConnection,
+    fingerprint_id: &str,
+    new_category: String
+) -> usize {
+    let fingerprint_exists = get_fingerprint_categories(conn, fingerprint_id).is_some();
+
+    if fingerprint_exists {
+        // Fingerprint exists, append the new category
+        if let Some((fingerprint_id, mut categories)) = get_fingerprint_categories(conn, fingerprint_id) {
+            if categories.contains(&new_category) {
+                return 0;
+            }
+            
+            categories.push(new_category);
+
+            let updated_fingerprint = Fingerprint::from_user_categories_vec(fingerprint_id.clone(), categories);
+
+            diesel::update(fingerprints.filter(id.eq(fingerprint_id)))
+                .set(user_categories.eq(updated_fingerprint.user_categories))
+                .execute(conn)
+                .expect("Error updating fingerprint")
+        } else {
+            0 // Should not reach here if fingerprint exists due to the first check
+        }
+    } else {
+        // Fingerprint does not exist, create a new row
+        let categories = vec![new_category];
+        let new_fingerprint = Fingerprint::from_user_categories_vec(fingerprint_id.to_string(), categories);
+
+        diesel::insert_into(fingerprints)
+            .values(&new_fingerprint)
+            .execute(conn)
+            .expect("Error creating fingerprint")
+    }
 }
