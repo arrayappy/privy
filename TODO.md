@@ -22,13 +22,13 @@
 - [x]  Anchor Rust Setup + Basic Intructions
 - [x]  Anchor Rust Complete
   - [x]  Insert message to user
-- [ ] Program V2 (Category + Fingerprint)
-- [ ] Server V2 + Wrapup
+- [x] Program V2 (Category + Fingerprint)
+- [x] Server V2 + Wrapup
 
 ### Frontend
 - [ ] Project inital setup + cleanup
-- [ ] Frontend Wallet Connections
 - [ ] Frontend Screens
+- [ ] Frontend Wallet Connections
 - [ ] Frontend APIs
 - [ ] Work on receiver and sender UI screens
 - [ ] Making API calls and complete functionality
@@ -40,20 +40,20 @@
 ---
 ## Improvements
 ### Category Plan - Do it before going to frontend
-- [ ]  Change messages from Vec<String> to Vec of Stringified Array [catId - 1, message]
-- [ ]  Add categories as Vec stringified array [cat name(24), passkey, isEnabled] - 0 index for no category
-- [ ]  Update user byte space for messages and categories
-- [ ]  Add create category function with catName,  passkey and isEnabled
-- [ ]  Change url from [privy.com/naidu](http://privy.com/naidu) → privy.com/naidu/1
+- [x]  Change messages from Vec<String> to Vec of Stringified Array [catId - 1, message]
+- [x]  Add categories as Vec stringified array [cat name(24), passkey, isEnabled] - 0 index for no category
+- [x]  Update user byte space for messages and categories
+- [x]  Add create category function with catName,  passkey and isEnabled
+- [x]  Change url from [privy.com/naidu](http://privy.com/naidu) → privy.com/naidu/1
 
 ### Fingerprint Plan
-- [ ]  fingerprints table
+- [x]  fingerprints table
     | fingerprint | user_categories |
     | --- | --- |
     | 123 | addr_catIdx[] |
-- [ ]  Program: Allow one request per user per category - add it to categories vector
-- [ ]  Server: Get user_categories by fingerprint
-- [ ]  Server: Create or insert addr_catIdx into fingerprint
+- [x]  Program: Allow one request per user per category - add it to categories vector
+- [x]  Server: Get user_categories by fingerprint
+- [x]  Server: Create or insert addr_catIdx into fingerprint
 
 ### Future
 - [ ] Improve DB methods with generic traits
