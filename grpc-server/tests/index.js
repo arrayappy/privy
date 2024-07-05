@@ -4,7 +4,7 @@ import { promisify } from "util";
 
 // Load the proto file
 const packageDefinition = protoLoader.loadSync(
-  "../grpc-server/proto/privy.proto",
+  "../proto/privy.proto",
   {
     keepCase: true,
     longs: String,
