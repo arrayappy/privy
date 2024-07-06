@@ -4,16 +4,25 @@ use std::thread;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 use chrono::Utc;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{
+    transport::Server,
+    Request, 
+    Response, 
+    Status
+};
 
-use privy::privy_service_server::{PrivyService, PrivyServiceServer};
+use privy::privy_service_server::{
+    PrivyService, 
+    PrivyServiceServer
+};
 use privy::{
-    GetUserRes,
-    GetUserReq,
+    CheckUsernameExistReq, 
+    CreateOrUpdateUserReq, 
+    DeleteUserReq, 
+    GetUserReq, 
+    GetUserRes, 
     InsertMessageReq, 
-    CreateOrUpdateUserReq,
-    DeleteUserReq,
-    SuccessRes,
+    SuccessRes
 };
 
 mod db;
@@ -33,7 +42,6 @@ use solana::client::{
     insert_message_to_pda,
     get_user_pda_account
 };
-
 
 pub mod privy {
     tonic::include_proto!("privy");
@@ -175,6 +183,18 @@ impl PrivyService for MyPrivyService {
             Ok(1) => Ok(Response::new(SuccessRes { success: true })),
             Ok(_) => Err(Status::internal("Failed to delete user")),
             Err(_) => Err(Status::internal("Failed to delete user")),
+        }
+    }
+    async fn check_username_exist(
+        &self,
+        request: Request<CheckUsernameExistReq>
+    ) -> Result<Response<SuccessRes>, Status> {
+        let req = request.into_inner();
+        let mut connection = establish_connection();
+        
+        match get_user_by_row_name(&mut connection, &req.user_name) {
+            Some(_) => Ok(Response::new(SuccessRes { success: true })),
+            None => Ok(Response::new(SuccessRes { success: false })),
         }
     }
 }

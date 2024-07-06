@@ -8,6 +8,7 @@ service PrivyService {
   rpc UpdateUser (CreateOrUpdateUserReq) returns (SuccessRes);
   rpc DeleteUser (DeleteUserReq) returns (SuccessRes);
   rpc GetUser (GetUserReq) returns (GetUserRes);
+  rpc CheckUsernameExist (CheckUsernameExistReq) returns (SuccessRes);
 }
 
 message GetUserReq {
@@ -40,4 +41,8 @@ message DeleteUserReq {
 
 message SuccessRes {
   bool success = 1;
+}
+
+message CheckUsernameExistReq {
+  string user_name = 1;
 }

@@ -27,6 +27,7 @@ const UpdateUser = promisify(client.UpdateUser).bind(client);
 const DeleteUser = promisify(client.DeleteUser).bind(client);
 const GetUser = promisify(client.GetUser).bind(client);
 const InsertMessage = promisify(client.InsertMessage).bind(client);
+const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
 
 // Test all the methods
 (async () => {
@@ -36,52 +37,57 @@ const InsertMessage = promisify(client.InsertMessage).bind(client);
     const oldUsername = "arrayappy";
     const newUsername = "naidu";
 
-    const createUserResponse = await CreateUser({
-      user_addr: userAddr,
-      user_name: oldUsername,
-    });
-    console.log("CreateUser Response:", createUserResponse);
+    // const createUserResponse = await CreateUser({
+    //   user_addr: userAddr,
+    //   user_name: oldUsername,
+    // });
+    // console.log("CreateUser Response:", createUserResponse);
 
     // Test GetUserByAddr
-    const getUserByAddrResponse = await GetUserByAddr({
-      user_addr: userAddr,
-    });
-    console.log("GetUserByAddr Response:", getUserByAddrResponse);
+    // const getUserByAddrResponse = await GetUserByAddr({
+    //   user_addr: userAddr,
+    // });
+    // console.log("GetUserByAddr Response:", getUserByAddrResponse);
 
-    // Test UpdateUser
-    const updateUserResponse = await UpdateUser({
-      user_addr: userAddr,
-      user_name: newUsername,
-    });
-    console.log("UpdateUser Response:", updateUserResponse);
+    // // Test UpdateUser
+    // const updateUserResponse = await UpdateUser({
+    //   user_addr: userAddr,
+    //   user_name: newUsername,
+    // });
+    // console.log("UpdateUser Response:", updateUserResponse);
 
-    // Test GetUserByName
-    const getUserByNameResponse = await GetUserByName({
-      user_name: newUsername,
-    });
-    console.log("GetUserByName Response:", getUserByNameResponse);
+    // // Test GetUserByName
+    // const getUserByNameResponse = await GetUserByName({
+    //   user_name: newUsername,
+    // });
+    // console.log("GetUserByName Response:", getUserByNameResponse);
 
-    // Test DeleteUser
-    const deleteUserResponse = await DeleteUser({
-      user_addr: userAddr,
-    });
-    console.log("DeleteUser Response:", deleteUserResponse);
+    // // Test DeleteUser
+    // const deleteUserResponse = await DeleteUser({
+    //   user_addr: userAddr,
+    // });
+    // console.log("DeleteUser Response:", deleteUserResponse);
 
-    const insertMessageResponse = await InsertMessage({
-      user_addr: userAddr,
-      message: "hey1",
-      fingerprint_id: "finger01",
-      cat_idx: 0,
-      passkey: "",
-    });
-    console.log(insertMessageResponse);
+    // const insertMessageResponse = await InsertMessage({
+    //   user_addr: userAddr,
+    //   message: "hey1",
+    //   fingerprint_id: "finger01",
+    //   cat_idx: 0,
+    //   passkey: "",
+    // });
+    // console.log(insertMessageResponse);
 
-    const getUserResponse = await GetUser({
-      user_name: newUsername,
-      cat_idx: 0,
-      fingerprint_id: "finger01",
-    });
-    console.log(getUserResponse);
+    // const getUserResponse = await GetUser({
+    //   user_name: newUsername,
+    //   cat_idx: 0,
+    //   fingerprint_id: "finger01",
+    // });
+    // console.log(getUserResponse);
+
+    const checkUsernameExist = await CheckUsernameExist({
+      user_name: newUsername
+    })
+    console.log(checkUsernameExist)
 
   } catch (err) {
     console.error("Error:", err);
