@@ -1,10 +1,7 @@
-use serde::{Deserialize, Serialize};
-use crate::db::schema::{
-    usernames, 
-    fingerprints
-};
+use crate::db::schema::{fingerprints, usernames};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 // User structs
 #[derive(Queryable, Selectable, Deserialize, Serialize)]
@@ -30,7 +27,7 @@ pub struct NewUser<'a> {
 #[diesel(table_name = usernames)]
 pub struct UpdatedUser<'a> {
     pub user_name: &'a str,
-    pub updated_at: NaiveDateTime
+    pub updated_at: NaiveDateTime,
 }
 
 // // Fingerprint structs
@@ -56,9 +53,8 @@ impl Fingerprint {
     }
 }
 
-
 #[derive(AsChangeset, Deserialize, Serialize)]
 #[diesel(table_name = fingerprints)]
 pub struct UpdateFingerprint {
-    pub user_categories: String
+    pub user_categories: String,
 }

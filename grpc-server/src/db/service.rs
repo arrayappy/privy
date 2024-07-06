@@ -1,14 +1,11 @@
-use diesel::prelude::*;
-use crate::db::models;
-use crate::db::schema::usernames::dsl::*;
-use self::models::{NewUser, UpdatedUser, User};
-use crate::db::schema::fingerprints::dsl::*;
 use self::models::Fingerprint;
+use self::models::{NewUser, UpdatedUser, User};
+use crate::db::models;
+use crate::db::schema::fingerprints::dsl::*;
+use crate::db::schema::usernames::dsl::*;
+use diesel::prelude::*;
 
-pub fn get_user_by_row_name(
-    conn: &mut PgConnection,
-    name: &str
-) -> Option<User> {
+pub fn get_user_by_row_name(conn: &mut PgConnection, name: &str) -> Option<User> {
     usernames
         .filter(user_name.eq(name))
         .first(conn)
@@ -16,10 +13,7 @@ pub fn get_user_by_row_name(
         .expect("Error getting user by addr")
 }
 
-pub fn create_user_row(
-    conn: &mut PgConnection,
-    new_user: NewUser
-) -> usize {
+pub fn create_user_row(conn: &mut PgConnection, new_user: NewUser) -> usize {
     diesel::insert_into(usernames)
         .values(&new_user)
         .execute(conn)
@@ -29,7 +23,7 @@ pub fn create_user_row(
 pub fn update_user_row(
     conn: &mut PgConnection,
     _user_addr: &str,
-    updated_user: UpdatedUser
+    updated_user: UpdatedUser,
 ) -> usize {
     diesel::update(usernames.filter(user_addr.eq(_user_addr)))
         .set(&updated_user)
@@ -37,17 +31,13 @@ pub fn update_user_row(
         .expect("Error updating user")
 }
 
-pub fn delete_user_row(
-    conn: &mut PgConnection,
-    addr: &str
-) -> QueryResult<usize> {
-    diesel::delete(usernames.filter(user_addr.eq(addr)))
-        .execute(conn)
+pub fn delete_user_row(conn: &mut PgConnection, addr: &str) -> QueryResult<usize> {
+    diesel::delete(usernames.filter(user_addr.eq(addr))).execute(conn)
 }
 
 pub fn get_fingerprint_categories(
     conn: &mut PgConnection,
-    fingerprint_id: &str
+    fingerprint_id: &str,
 ) -> Option<(String, Vec<String>)> {
     fingerprints
         .filter(id.eq(fingerprint_id))
@@ -60,20 +50,23 @@ pub fn get_fingerprint_categories(
 pub fn append_fingerprint(
     conn: &mut PgConnection,
     fingerprint_id: &str,
-    new_category: String
+    new_category: String,
 ) -> usize {
     let fingerprint_exists = get_fingerprint_categories(conn, fingerprint_id).is_some();
 
     if fingerprint_exists {
         // Fingerprint exists, append the new category
-        if let Some((fingerprint_id, mut categories)) = get_fingerprint_categories(conn, fingerprint_id) {
+        if let Some((fingerprint_id, mut categories)) =
+            get_fingerprint_categories(conn, fingerprint_id)
+        {
             if categories.contains(&new_category) {
                 return 0;
             }
-            
+
             categories.push(new_category);
 
-            let updated_fingerprint = Fingerprint::from_user_categories_vec(fingerprint_id.clone(), categories);
+            let updated_fingerprint =
+                Fingerprint::from_user_categories_vec(fingerprint_id.clone(), categories);
 
             diesel::update(fingerprints.filter(id.eq(fingerprint_id)))
                 .set(user_categories.eq(updated_fingerprint.user_categories))
@@ -85,7 +78,8 @@ pub fn append_fingerprint(
     } else {
         // Fingerprint does not exist, create a new row
         let categories = vec![new_category];
-        let new_fingerprint = Fingerprint::from_user_categories_vec(fingerprint_id.to_string(), categories);
+        let new_fingerprint =
+            Fingerprint::from_user_categories_vec(fingerprint_id.to_string(), categories);
 
         diesel::insert_into(fingerprints)
             .values(&new_fingerprint)

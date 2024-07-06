@@ -4,44 +4,24 @@ use std::thread;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 use chrono::Utc;
-use tonic::{
-    transport::Server,
-    Request, 
-    Response, 
-    Status
-};
+use tonic::{transport::Server, Request, Response, Status};
 
-use privy::privy_service_server::{
-    PrivyService, 
-    PrivyServiceServer
-};
+use privy::privy_service_server::{PrivyService, PrivyServiceServer};
 use privy::{
-    CheckUsernameExistReq, 
-    CreateOrUpdateUserReq, 
-    DeleteUserReq, 
-    GetUserReq, 
-    GetUserRes, 
-    InsertMessageReq, 
-    SuccessRes
+    CheckUsernameExistReq, CreateOrUpdateUserReq, DeleteUserReq, GetUserReq, GetUserRes,
+    InsertMessageReq, SuccessRes,
 };
 
 mod db;
-use db::models::{NewUser, UpdatedUser};
 use db::connection::establish_connection;
+use db::models::{NewUser, UpdatedUser};
 use db::service::{
-    append_fingerprint, 
-    create_user_row, 
-    delete_user_row, 
-    get_fingerprint_categories, 
-    get_user_by_row_name, 
-    update_user_row
+    append_fingerprint, create_user_row, delete_user_row, get_fingerprint_categories,
+    get_user_by_row_name, update_user_row,
 };
 
 mod solana;
-use solana::client::{
-    insert_message_to_pda,
-    get_user_pda_account
-};
+use solana::client::{get_user_pda_account, insert_message_to_pda};
 
 pub mod privy {
     tonic::include_proto!("privy");
@@ -52,26 +32,22 @@ pub struct MyPrivyService {}
 
 #[tonic::async_trait]
 impl PrivyService for MyPrivyService {
-    async fn get_user(
-        &self,
-        request: Request<GetUserReq>,
-    ) -> Result<Response<GetUserRes>, Status> {
+    async fn get_user(&self, request: Request<GetUserReq>) -> Result<Response<GetUserRes>, Status> {
         let req = request.into_inner();
         println!("Got a request by name: {:?}", req);
 
         let mut connection = establish_connection();
 
-        let user_row =  get_user_by_row_name(&mut connection, &req.user_name)
+        let user_row = get_user_by_row_name(&mut connection, &req.user_name)
             .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_name)))?;
 
-        let fingerprint_categories = get_fingerprint_categories(&mut connection, &req.fingerprint_id)
-            .unwrap_or((String::new(), Vec::new()));
+        let fingerprint_categories =
+            get_fingerprint_categories(&mut connection, &req.fingerprint_id)
+                .unwrap_or((String::new(), Vec::new()));
 
         let user_pub_key: Pubkey = Pubkey::from_str(&user_row.user_addr).unwrap();
 
-        let user_pda = match thread::spawn(move || {
-            get_user_pda_account(&user_pub_key)
-        }).join() {
+        let user_pda = match thread::spawn(move || get_user_pda_account(&user_pub_key)).join() {
             Ok(result) => match result {
                 Ok(pda) => pda,
                 Err(_) => return Err(Status::internal("User not found")),
@@ -84,15 +60,21 @@ impl PrivyService for MyPrivyService {
             if user_pda.token_limit <= 0 {
                 return Err(Status::permission_denied("User token limit exceeded"));
             }
-    
+
             if !category.enabled {
                 return Err(Status::permission_denied("Category not enabled"));
             }
-    
-            if category.single_msg && fingerprint_categories.1.contains(&format!("{}_{}", user_row.user_addr, &req.cat_idx)) {
-                return Err(Status::permission_denied("Single message already sent for this category"));
+
+            if category.single_msg
+                && fingerprint_categories
+                    .1
+                    .contains(&format!("{}_{}", user_row.user_addr, &req.cat_idx))
+            {
+                return Err(Status::permission_denied(
+                    "Single message already sent for this category",
+                ));
             }
-    
+
             let success_response = GetUserRes {
                 user_addr: user_row.user_addr,
                 passkey_enabled: !category.passkey.is_empty(),
@@ -108,20 +90,24 @@ impl PrivyService for MyPrivyService {
         request: Request<InsertMessageReq>,
     ) -> Result<Response<SuccessRes>, Status> {
         let req = request.into_inner();
-        
+
         let mut connection = establish_connection();
 
         let user_addr = Pubkey::from_str(&req.user_addr).unwrap();
-        
+
         let _ = thread::spawn(move || {
             insert_message_to_pda(&user_addr, req.cat_idx, req.message, req.passkey)
-        }).join().expect("Thread panicked");
+        })
+        .join()
+        .expect("Thread panicked");
 
-        append_fingerprint(&mut connection, &req.fingerprint_id, format!("{}_{}", req.user_addr, req.cat_idx));
+        append_fingerprint(
+            &mut connection,
+            &req.fingerprint_id,
+            format!("{}_{}", req.user_addr, req.cat_idx),
+        );
 
-        let response = SuccessRes {
-            success: true,
-        };
+        let response = SuccessRes { success: true };
 
         Ok(Response::new(response))
     }
@@ -187,11 +173,11 @@ impl PrivyService for MyPrivyService {
     }
     async fn check_username_exist(
         &self,
-        request: Request<CheckUsernameExistReq>
+        request: Request<CheckUsernameExistReq>,
     ) -> Result<Response<SuccessRes>, Status> {
         let req = request.into_inner();
         let mut connection = establish_connection();
-        
+
         match get_user_by_row_name(&mut connection, &req.user_name) {
             Some(_) => Ok(Response::new(SuccessRes { success: true })),
             None => Ok(Response::new(SuccessRes { success: false })),
