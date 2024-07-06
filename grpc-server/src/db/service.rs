@@ -1,22 +1,9 @@
-use serde_json;
-
 use diesel::prelude::*;
 use crate::db::models;
 use crate::db::schema::usernames::dsl::*;
 use self::models::{NewUser, UpdatedUser, User};
 use crate::db::schema::fingerprints::dsl::*;
 use self::models::Fingerprint;
-
-pub fn get_user_row_by_addr(
-    conn: &mut PgConnection,
-    addr: &str
-) -> Option<User> {
-    usernames
-        .filter(user_addr.eq(addr))
-        .first(conn)
-        .optional()
-        .expect("Error loading user")
-}
 
 pub fn get_user_by_row_name(
     conn: &mut PgConnection,

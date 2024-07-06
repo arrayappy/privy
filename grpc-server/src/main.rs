@@ -8,8 +8,6 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use privy::privy_service_server::{PrivyService, PrivyServiceServer};
 use privy::{
-    GetUserByAddrReq, 
-    GetUserByNameReq, 
     GetUserRes,
     GetUserReq,
     InsertMessageReq, 
@@ -22,7 +20,12 @@ mod db;
 use db::models::{NewUser, UpdatedUser};
 use db::connection::establish_connection;
 use db::service::{
-    append_fingerprint, create_user_row, delete_user_row, get_fingerprint_categories, get_user_by_row_name, update_user_row
+    append_fingerprint, 
+    create_user_row, 
+    delete_user_row, 
+    get_fingerprint_categories, 
+    get_user_by_row_name, 
+    update_user_row
 };
 
 mod solana;
@@ -41,52 +44,6 @@ pub struct MyPrivyService {}
 
 #[tonic::async_trait]
 impl PrivyService for MyPrivyService {
-    async fn get_user_by_addr(
-        &self,
-        request: Request<GetUserByAddrReq>,
-    ) -> Result<Response<GetUserRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request by addr: {:?}", req);
-
-        let mut connection = establish_connection();
-
-        match get_user_row_by_addr(&mut connection, &req.user_addr) {
-          Some(user) => {
-              let user_res = GetUserRes {
-                  user_addr: user.user_addr,
-                  user_name: user.user_name,
-                  created_at: user.created_at.to_string(),
-                  updated_at: user.updated_at.to_string(),
-              };
-              Ok(Response::new(user_res))
-          },
-          None => Err(Status::not_found("User not found")),
-      }
-    }
-
-    async fn get_user_by_name(
-        &self,
-        request: Request<GetUserByNameReq>,
-    ) -> Result<Response<GetUserRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request by name: {:?}", req);
-
-        let mut connection = establish_connection();
-
-        match get_user_by_row_name(&mut connection, &req.user_name) {
-          Some(user) => {
-              let user_res = GetUserRes {
-                  user_addr: user.user_addr,
-                  user_name: user.user_name,
-                  created_at: user.created_at.to_string(),
-                  updated_at: user.updated_at.to_string(),
-              };
-              Ok(Response::new(user_res))
-          },
-          None => Err(Status::not_found("User not found")),
-        }
-    }
-
     async fn get_user(
         &self,
         request: Request<GetUserReq>,
@@ -104,10 +61,6 @@ impl PrivyService for MyPrivyService {
 
         let user_pub_key: Pubkey = Pubkey::from_str(&user_row.user_addr).unwrap();
 
-        // let user_pda = thread::spawn(move || {
-        //         get_user_pda_account(&user_pub_key)
-        // }).join().expect("Thread panicked").unwrap();
-
         let user_pda = match thread::spawn(move || {
             get_user_pda_account(&user_pub_key)
         }).join() {
@@ -118,12 +71,6 @@ impl PrivyService for MyPrivyService {
             Err(_) => return Err(Status::internal("Thread panicked")),
         };
 
-        // let category = user_pda.categories[req.cat_idx];
-        //     - if user_pda && user_pda.tokens_left && category.enabled && (category.single_msg true but not found in fingerprints or single_msg false)
-        //     - Return addr, passkey_enabled (send true if exists else false),
-        //     - else
-        //     - tokens_left, enabled, single_msg - for client side errors
-        
         let category_option = user_pda.categories.get(req.cat_idx.clone() as usize);
         if let Some(Some(category)) = category_option {
             if user_pda.token_limit <= 0 {
@@ -230,29 +177,6 @@ impl PrivyService for MyPrivyService {
             Err(_) => Err(Status::internal("Failed to delete user")),
         }
     }
-
-    // async fn fingerprint_test(
-    //     &self,
-    //     _request: Request<EmptyReq>,
-    // ) -> Result<Response<SuccessRes>, Status> {
-    //     let mut connection = establish_connection();
-    //     let fingerprint_id = "test_fingerprint_id2";
-    //     let new_category = "test_category3";
-
-    //     // Append a fingerprint
-    //     append_fingerprint(&mut connection, fingerprint_id, new_category.to_string());
-
-    //     // Get the updated fingerprint
-    //     let result = get_fingerprint(&mut connection, fingerprint_id);
-
-    //     match result {
-    //         Some((_id, categories)) => {
-    //             println!("Updated categories: {:?}", categories);
-    //             Ok(Response::new(SuccessRes { success: true }))
-    //         }
-    //         None => Err(Status::internal("Failed to retrieve fingerprint")),
-    //     }
-    // }
 }
 
 #[tokio::main]

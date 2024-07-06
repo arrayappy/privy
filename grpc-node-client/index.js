@@ -27,7 +27,6 @@ const UpdateUser = promisify(client.UpdateUser).bind(client);
 const DeleteUser = promisify(client.DeleteUser).bind(client);
 const GetUser = promisify(client.GetUser).bind(client);
 const InsertMessage = promisify(client.InsertMessage).bind(client);
-// const FingerprintTest = promisify(client.FingerprintTest).bind(client);
 
 // Test all the methods
 (async () => {
@@ -84,8 +83,6 @@ const InsertMessage = promisify(client.InsertMessage).bind(client);
     });
     console.log(getUserResponse);
 
-    // const fingerprintTestResponse = await FingerprintTest({});
-    // console.log(fingerprintTestResponse)
   } catch (err) {
     console.error("Error:", err);
   }

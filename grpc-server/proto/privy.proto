@@ -3,22 +3,11 @@ syntax = "proto3";
 package privy;
 
 service PrivyService {
-  rpc GetUserByAddr (GetUserByAddrReq) returns (GetUserRes);
-  rpc GetUserByName (GetUserByNameReq) returns (GetUserRes);
   rpc InsertMessage (InsertMessageReq) returns (SuccessRes);
   rpc CreateUser (CreateOrUpdateUserReq) returns (SuccessRes);
   rpc UpdateUser (CreateOrUpdateUserReq) returns (SuccessRes);
   rpc DeleteUser (DeleteUserReq) returns (SuccessRes);
   rpc GetUser (GetUserReq) returns (GetUserRes);
-  // rpc FingerprintTest (EmptyReq) returns (SuccessRes);
-}
-
-message GetUserByAddrReq {
-  string user_addr = 1;
-}
-
-message GetUserByNameReq {
-  string user_name = 1;
 }
 
 message GetUserReq {
@@ -52,5 +41,3 @@ message DeleteUserReq {
 message SuccessRes {
   bool success = 1;
 }
-
-message EmptyReq {}  // Empty request message
