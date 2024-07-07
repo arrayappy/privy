@@ -140,10 +140,7 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn insert_message(
-        ctx: Context<InsertMessage>,
-        messages: String,
-    ) -> Result<()> {
+    pub fn insert_message(ctx: Context<InsertMessage>, messages: String) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
 
         require!(privy_user.token_limit > 0, CustomError::TokenLimitExceeded);
@@ -158,10 +155,7 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn update_category(
-        ctx: Context<UpdateUser>,
-        categories: String
-    ) -> Result<()> {
+    pub fn update_category(ctx: Context<UpdateUser>, categories: String) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
 
         privy_user.categories = categories;

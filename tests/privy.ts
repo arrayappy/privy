@@ -42,7 +42,6 @@ let iv = Buffer.from("anexampleiv12345"); // 16 bytes for AES-128
 let extendedKey = extendKey(key, 16);
 
 describe("Privy Config", () => {
-
   it("Initialize Privy Config", async () => {
     await program.methods
       .initializePrivyConfig(tokensPerSol)
@@ -171,7 +170,7 @@ describe("Privy Admin", () => {
 
   it("Insert message into messages vector", async () => {
     const passkey = "secret";
-    const messages = "0:hi";
+    const messages = JSON.stringify(["0:hi"]);
 
     let encryptedMessages = compressAndEncrypt(messages, extendedKey, iv);
 
@@ -191,7 +190,6 @@ describe("Privy Admin", () => {
 });
 
 describe("Privy User Categories", () => {
-
   it("Update Category", async () => {
     const categories = [{
       cat_name: "cat1",
@@ -218,6 +216,15 @@ describe("Privy User Categories", () => {
     console.log(accountData)
     expect(accountData.categories).to.equal(encryptedCategories);
     expect(decompressAndDecrypt(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
+  });
+});
+
+describe("Read", () => {
+  it("Read Privy User", async () => {
+    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    accountData.messages = JSON.parse(decompressAndDecrypt(accountData.messages, extendedKey, iv));
+    accountData.categories = JSON.parse(decompressAndDecrypt(accountData.categories, extendedKey, iv));
+    console.log(accountData)
   });
 });
 
