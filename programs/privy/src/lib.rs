@@ -132,7 +132,7 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn allocate_space(ctx: Context<AllocateSpace>, computed_space: u32) -> Result<()> {
+    pub fn allocate_space(ctx: Context<UpdateUser>, computed_space: u32) -> Result<()> {
         ctx.accounts
             .privy_user
             .to_account_info()
@@ -159,7 +159,7 @@ pub mod privy {
     }
 
     pub fn update_category(
-        ctx: Context<CategoryCtx>,
+        ctx: Context<UpdateUser>,
         categories: String
     ) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
@@ -245,24 +245,6 @@ pub struct UpdateUser<'info> {
 }
 
 #[derive(Accounts)]
-pub struct CategoryCtx<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    #[account(mut)]
-    pub privy_user: Account<'info, PrivyUser>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct AllocateSpace<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
-    #[account(mut)]
-    pub privy_user: Account<'info, PrivyUser>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 pub struct InsertMessage<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
@@ -306,14 +288,4 @@ pub enum CustomError {
     TokenLimitExceeded,
     #[msg("Disabled receiving messages.")]
     MessagesDisabled,
-    #[msg("Invalid category index")]
-    InvalidCategoryIndex,
-    #[msg("Token limit underflow")]
-    TokenLimitUnderflow,
-    #[msg("Category not found")]
-    CategoryNotFound,
-    #[msg("Invalid passkey")]
-    InvalidPasskey,
-    #[msg("Category disabled")]
-    CategoryDisabled,
 }
