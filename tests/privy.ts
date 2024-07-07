@@ -33,6 +33,17 @@ function decrypt(encryptedData, key, iv) {
     return decrypted;
 }
 
+function compressAndEncrypt(data, key, iv) {
+  const compressedData = compressData(data);
+  const encryptedData = encrypt(compressedData, key, iv);
+  return encryptedData;
+}
+
+function decompressAndDecrypt(encryptedData, key, iv) {
+  const decryptedData = decrypt(encryptedData, key, iv);
+  const decompressedData = decompressData(decryptedData);
+  return decompressedData;
+}
 const provider = anchor.AnchorProvider.local();
 anchor.setProvider(provider);
 console.log(`Using wallet: ${provider.wallet.publicKey.toString()}`);
@@ -60,6 +71,10 @@ console.log('provider', provider.wallet.publicKey)
 
 const tokensPerSol = 50;
 const newTokensPerSol = 100;
+
+let key = "key1";
+let iv = Buffer.from("anexampleiv12345"); // 16 bytes for AES-128
+let extendedKey = extendKey(key, 16);
 
 describe("Privy Config", () => {
 
@@ -109,8 +124,16 @@ describe("Privy User", () => {
       allocatePromises.push(await promise);
     }
     
+    const categories = [{
+      cat_name: "cat1",
+      passkey: "cat_secret",
+      enabled: true,
+      single_msg: false,
+    }];
+    const encryptedCategories  = compressAndEncrypt(categories, extendedKey, iv);
+
     await program.methods
-      .createUser(userData.username, userData.passkey, new anchor.BN(depositLamports))
+      .createUser(userData.username, encryptedCategories, new anchor.BN(depositLamports))
       .accounts({
         user: provider.wallet.publicKey,
         privyUser: privyUserPDA,
@@ -188,19 +211,12 @@ describe("Privy Admin", () => {
   })
 
   it("Insert message into messages vector", async () => {
-    const catIdx = 0;
     const passkey = "secret";
-    const message = "hi";
+    const messages = "0:hi";
 
-    let key = "key1";
-    let iv = Buffer.from("anexampleiv12345"); // 16 bytes for AES-128
+    let encryptedMessages = compressAndEncrypt(messages, extendedKey, iv);
 
-    let extendedKey = extendKey(key, 16);
-
-    let compressedData = compressData(message);
-    let encryptedData = encrypt(compressedData, extendedKey, iv);
-
-    await program.methods.insertMessage(catIdx, passkey, encryptedData).accounts({
+    await program.methods.insertMessage(encryptedMessages).accounts({
       owner: provider.wallet.publicKey,
       privyConfig: privyConfigPDA,
       privyUser: privyUserPDA,
@@ -210,21 +226,31 @@ describe("Privy Admin", () => {
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
-    expect(accountData.messages).to.equal(encryptedData);
+    expect(accountData.messages).to.equal(encryptedMessages);
+    expect(decompressAndDecrypt(accountData.messages, extendedKey, iv)).to.equal(messages);
   })
 
 });
 
 describe("Privy User Categories", () => {
 
-  it("Create Category", async () => {
-    const catName = "General";
-    const passkey = "secret_passkey";
-    const enabled = true;
-    const singleMsg = false;
+  it("Update Category", async () => {
+    const categories = [{
+      cat_name: "cat1",
+      passkey: "cat1_secret",
+      enabled: true,
+      single_msg: false,
+    },{
+      cat_name: "cat2",
+      passkey: "cat2_secret",
+      enabled: true,
+      single_msg: true,
+    }];
+    const categoriesStr = JSON.stringify(categories);
+    const encryptedCategories  = compressAndEncrypt(categoriesStr, extendedKey, iv);
 
     await program.methods
-      .createCategory(catName, passkey, enabled, singleMsg)
+      .updateCategory(encryptedCategories)
       .accounts({
         privyUser: privyUserPDA,
         systemProgram: SystemProgram.programId,
@@ -233,54 +259,13 @@ describe("Privy User Categories", () => {
     
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
-    const category = accountData.categories[1];
-    expect(category.catName).to.equal(catName);
-    expect(category.passkey).to.equal(passkey);
-    expect(category.enabled).to.equal(enabled);
-    expect(category.singleMsg).to.equal(singleMsg);
+    // console.log('x',decompressAndDecrypt(accountData.categories, extendedKey, iv))
+    expect(accountData.categories).to.equal(encryptedCategories);
+    expect(decompressAndDecrypt(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
   });
-
-  it("Update Category", async () => {
-    const catIdx = 1;
-    const newCatName = "Updated General";
-    const newPasskey = "new_secret_passkey";
-    const enabled = false;
-    const singleMsg = true;
-
-    await program.methods
-      .updateCategory(catIdx, newCatName, newPasskey, enabled, singleMsg)
-      .accounts({
-        privyUser: privyUserPDA,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-    
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    const category = accountData.categories[1];
-    expect(category.catName).to.equal(newCatName);
-    expect(category.passkey).to.equal(newPasskey);
-    expect(category.enabled).to.equal(enabled);
-    expect(category.singleMsg).to.equal(singleMsg);
-  });
-
-  it("Delete Category", async () => {
-    const catIdx = 1;
-
-    await program.methods
-      .deleteCategory(catIdx)
-      .accounts({
-        privyUser: privyUserPDA,
-        systemProgram: SystemProgram.programId,
-      })
-      .rpc();
-    
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    const category = accountData.categories[1];
-    expect(category).to.be.null;
-  });
-  
 });
 
+  // // Encryption & compression to be implemented
   // describe("Load testing for message insertion", function () {
   //   it("should insert the same message 10 times and fail on the 11th attempt", async () => {
   //     for (let batch = 0; batch < 5; batch++) {

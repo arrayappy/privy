@@ -44,7 +44,7 @@ pub mod privy {
     pub fn create_user(
         ctx: Context<CreateUser>,
         username: String,
-        passkey: String,
+        categories: String,
         deposit_lamports: u64,
     ) -> Result<()> {
         let user = &mut ctx.accounts.user;
@@ -66,12 +66,7 @@ pub mod privy {
         privy_user.bump = ctx.bumps.privy_user;
         privy_user.token_limit = vector_size as u16;
 
-        privy_user.categories = vec![Some(Category {
-            cat_name: String::new(),
-            passkey: passkey.clone(),
-            enabled: true,
-            single_msg: false,
-        })];
+        privy_user.categories = categories;
 
         let cpi_accounts = Transfer {
             from: user.to_account_info(),
@@ -147,25 +142,11 @@ pub mod privy {
 
     pub fn insert_message(
         ctx: Context<InsertMessage>,
-        cat_idx: u32,
-        passkey: String,
         messages: String,
     ) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
 
-        require!(
-            privy_user.categories.len() > cat_idx as usize,
-            CustomError::InvalidCategoryIndex
-        );
-
-        let cat_config = privy_user.categories[cat_idx as usize]
-            .as_ref()
-            .ok_or(CustomError::CategoryNotFound)?
-            .clone();
-
         require!(privy_user.token_limit > 0, CustomError::TokenLimitExceeded);
-        require!(cat_config.passkey == passkey, CustomError::InvalidPasskey);
-        require!(cat_config.enabled, CustomError::CategoryDisabled);
 
         privy_user.messages = messages;
 
@@ -177,71 +158,14 @@ pub mod privy {
         Ok(())
     }
 
-    pub fn create_category(
-        ctx: Context<CategoryCtx>,
-        cat_name: String,
-        passkey: String,
-        enabled: bool,
-        single_msg: bool,
-    ) -> Result<()> {
-        let privy_user = &mut ctx.accounts.privy_user;
-
-        let cat_idx = privy_user.categories.len();
-        privy_user.categories.resize_with(cat_idx + 1, || None);
-
-        privy_user.categories[cat_idx as usize] = Some(Category {
-            cat_name,
-            passkey,
-            enabled,
-            single_msg,
-        });
-
-        Ok(())
-    }
-
     pub fn update_category(
         ctx: Context<CategoryCtx>,
-        cat_idx: u32,
-        cat_name: String,
-        passkey: String,
-        enabled: bool,
-        single_msg: bool,
+        categories: String
     ) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
 
-        require!(
-            privy_user.categories.len() > cat_idx as usize,
-            CustomError::InvalidCategoryIndex
-        );
-        require!(
-            privy_user.categories[cat_idx as usize].is_some(),
-            CustomError::CategoryNotFound
-        );
+        privy_user.categories = categories;
 
-        privy_user.categories[cat_idx as usize] = Some(Category {
-            cat_name,
-            passkey,
-            enabled,
-            single_msg,
-        });
-
-        Ok(())
-    }
-
-    pub fn delete_category(ctx: Context<CategoryCtx>, cat_idx: u32) -> Result<()> {
-        let privy_user = &mut ctx.accounts.privy_user;
-
-        require!(cat_idx != 0, CustomError::InvalidCategoryIndex);
-        require!(
-            privy_user.categories.len() > cat_idx as usize,
-            CustomError::InvalidCategoryIndex
-        );
-        require!(
-            privy_user.categories[cat_idx as usize].is_some(),
-            CustomError::CategoryNotFound
-        );
-
-        privy_user.categories[cat_idx as usize] = None;
         Ok(())
     }
 }
@@ -361,19 +285,11 @@ impl PrivyConfig {
     const CONFIG_SPACE: usize = 8 + 32 + 4;
 }
 
-#[derive(Clone, AnchorSerialize, AnchorDeserialize)]
-pub struct Category {
-    pub cat_name: String, // None for no category
-    pub passkey: String,
-    pub enabled: bool,
-    pub single_msg: bool,
-}
-
 #[account]
 pub struct PrivyUser {
     pub username: String,
     pub token_limit: u16,
-    pub categories: Vec<Option<Category>>,
+    pub categories: String,
     pub messages: String,
     pub bump: u8,
 }
