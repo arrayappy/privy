@@ -1,49 +1,14 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { Privy } from "../target/types/privy";
-import { expect } from 'chai';
+import { expect } from "chai";
+import {
+  extendKey,
+  compressAndEncrypt,
+  decompressAndDecrypt
+} from "./utils"
 
-// const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-const crypto = require('crypto');
-const zlib = require('zlib');
-
-function extendKey(key, length) {
-    return Buffer.from(key.repeat(Math.ceil(length / key.length)).slice(0, length));
-}
-
-function compressData(data) {
-    return zlib.brotliCompressSync(Buffer.from(data));
-}
-
-function decompressData(data) {
-    return zlib.brotliDecompressSync(data).toString('utf8');
-}
-
-function encrypt(data, key, iv) {
-    let cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
-    let encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
-    return encrypted.toString('base64');
-}
-
-function decrypt(encryptedData, key, iv) {
-    let decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
-    let decrypted = Buffer.concat([decipher.update(Buffer.from(encryptedData, 'base64')), decipher.final()]);
-    return decrypted;
-}
-
-function compressAndEncrypt(data, key, iv) {
-  const compressedData = compressData(data);
-  const encryptedData = encrypt(compressedData, key, iv);
-  return encryptedData;
-}
-
-function decompressAndDecrypt(encryptedData, key, iv) {
-  const decryptedData = decrypt(encryptedData, key, iv);
-  const decompressedData = decompressData(decryptedData);
-  return decompressedData;
-}
 const provider = anchor.AnchorProvider.local();
 anchor.setProvider(provider);
 console.log(`Using wallet: ${provider.wallet.publicKey.toString()}`);
@@ -84,7 +49,6 @@ describe("Privy Config", () => {
       .accounts({
         owner: provider.wallet.publicKey.toString(),
         privyConfig: privyConfigPDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc();
 
@@ -138,7 +102,6 @@ describe("Privy User", () => {
         user: provider.wallet.publicKey,
         privyUser: privyUserPDA,
         privyConfig: privyConfigPDA,
-        systemProgram: SystemProgram.programId,
       }).postInstructions(allocatePromises)
       .rpc();
 
@@ -156,7 +119,6 @@ describe("Privy User", () => {
       .updateUsername(newUsername)
       .accounts({
         privyUser: privyUserPDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc();
       const accountData = await program.account.privyUser.fetch(privyUserPDA);
@@ -203,11 +165,8 @@ describe("Privy Admin", () => {
       .accounts({
         owner: provider.wallet.publicKey,
         privyConfig: privyConfigPDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc()
-    // console.log(tx)
-    // console.log('x', await program.account.privyConfig.getAccountInfo(privyConfigPDA));
   })
 
   it("Insert message into messages vector", async () => {
@@ -220,7 +179,6 @@ describe("Privy Admin", () => {
       owner: provider.wallet.publicKey,
       privyConfig: privyConfigPDA,
       privyUser: privyUserPDA,
-      systemProgram: SystemProgram.programId,
     })
     .rpc();
 
@@ -253,19 +211,18 @@ describe("Privy User Categories", () => {
       .updateCategory(encryptedCategories)
       .accounts({
         privyUser: privyUserPDA,
-        systemProgram: SystemProgram.programId,
       })
       .rpc();
     
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
-    // console.log('x',decompressAndDecrypt(accountData.categories, extendedKey, iv))
     expect(accountData.categories).to.equal(encryptedCategories);
     expect(decompressAndDecrypt(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
   });
 });
 
-  // // Encryption & compression to be implemented
+// // Encryption & compression to be implemented
+// const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
   // describe("Load testing for message insertion", function () {
   //   it("should insert the same message 10 times and fail on the 11th attempt", async () => {
   //     for (let batch = 0; batch < 5; batch++) {
