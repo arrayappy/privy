@@ -4,7 +4,34 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { Privy } from "../target/types/privy";
 import { expect } from 'chai';
 
-const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const crypto = require('crypto');
+const zlib = require('zlib');
+
+function extendKey(key, length) {
+    return Buffer.from(key.repeat(Math.ceil(length / key.length)).slice(0, length));
+}
+
+function compressData(data) {
+    return zlib.brotliCompressSync(Buffer.from(data));
+}
+
+function decompressData(data) {
+    return zlib.brotliDecompressSync(data).toString('utf8');
+}
+
+function encrypt(data, key, iv) {
+    let cipher = crypto.createCipheriv('aes-128-cbc', key, iv);
+    let encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
+    return encrypted.toString('base64');
+}
+
+function decrypt(encryptedData, key, iv) {
+    let decipher = crypto.createDecipheriv('aes-128-cbc', key, iv);
+    let decrypted = Buffer.concat([decipher.update(Buffer.from(encryptedData, 'base64')), decipher.final()]);
+    return decrypted;
+}
 
 const provider = anchor.AnchorProvider.local();
 anchor.setProvider(provider);
@@ -164,7 +191,16 @@ describe("Privy Admin", () => {
     const catIdx = 0;
     const passkey = "secret";
     const message = "hi";
-    await program.methods.insertMessage(catIdx, passkey, message).accounts({
+
+    let key = "key1";
+    let iv = Buffer.from("anexampleiv12345"); // 16 bytes for AES-128
+
+    let extendedKey = extendKey(key, 16);
+
+    let compressedData = compressData(message);
+    let encryptedData = encrypt(compressedData, extendedKey, iv);
+
+    await program.methods.insertMessage(catIdx, passkey, encryptedData).accounts({
       owner: provider.wallet.publicKey,
       privyConfig: privyConfigPDA,
       privyUser: privyUserPDA,
@@ -174,7 +210,7 @@ describe("Privy Admin", () => {
 
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
-    expect(accountData.messages.includes("0:hi")).to.be.true;
+    expect(accountData.messages).to.equal(encryptedData);
   })
 
 });

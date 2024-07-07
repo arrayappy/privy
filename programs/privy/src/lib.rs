@@ -64,7 +64,6 @@ pub mod privy {
 
         privy_user.username = username;
         privy_user.bump = ctx.bumps.privy_user;
-        privy_user.messages = Vec::with_capacity(vector_size);
         privy_user.token_limit = vector_size as u16;
 
         privy_user.categories = vec![Some(Category {
@@ -119,7 +118,6 @@ pub mod privy {
         let privy_config_lamports = additional_lamports.saturating_sub(privy_user_lamports);
 
         privy_user.token_limit = new_token_limit;
-        privy_user.messages.reserve(new_token_limit as usize);
 
         let cpi_accounts = Transfer {
             from: user.to_account_info(),
@@ -151,7 +149,7 @@ pub mod privy {
         ctx: Context<InsertMessage>,
         cat_idx: u32,
         passkey: String,
-        message: String,
+        messages: String,
     ) -> Result<()> {
         let privy_user = &mut ctx.accounts.privy_user;
 
@@ -169,8 +167,7 @@ pub mod privy {
         require!(cat_config.passkey == passkey, CustomError::InvalidPasskey);
         require!(cat_config.enabled, CustomError::CategoryDisabled);
 
-        let message_with_cat_idx = format!("{}:{}", cat_idx, message);
-        privy_user.messages.push(message_with_cat_idx);
+        privy_user.messages = messages;
 
         privy_user.token_limit = privy_user
             .token_limit
@@ -377,7 +374,7 @@ pub struct PrivyUser {
     pub username: String,
     pub token_limit: u16,
     pub categories: Vec<Option<Category>>,
-    pub messages: Vec<String>,
+    pub messages: String,
     pub bump: u8,
 }
 
