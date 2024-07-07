@@ -1,6 +1,10 @@
 use std::str::FromStr;
 use std::thread;
 
+use serde;
+use serde_json;
+use serde::Deserialize;
+
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 use chrono::Utc;
@@ -14,14 +18,28 @@ use privy::{
 
 mod db;
 use db::connection::establish_connection;
-use db::models::{NewUser, UpdatedUser};
+use db::models::{User, UpdatedUser};
 use db::service::{
     append_fingerprint, create_user_row, delete_user_row, get_fingerprint_categories,
-    get_user_by_row_name, update_user_row,
+    get_user_row_by_name, get_user_row_by_addr, update_user_row,
 };
 
 mod solana;
 use solana::client::{get_user_pda_account, insert_message_to_pda};
+
+mod encryption;
+use encryption::service::{
+    compress_and_encrypt,
+    decompress_and_decrypt
+};
+
+#[derive(Deserialize, Debug)]
+pub struct Category {
+    pub cat_name: String,
+    pub passkey: String,
+    pub enabled: bool,
+    pub single_msg: bool,
+}
 
 pub mod privy {
     tonic::include_proto!("privy");
@@ -38,7 +56,7 @@ impl PrivyService for MyPrivyService {
 
         let mut connection = establish_connection();
 
-        let user_row = get_user_by_row_name(&mut connection, &req.user_name)
+        let user_row = get_user_row_by_name(&mut connection, &req.user_name)
             .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_name)))?;
 
         let fingerprint_categories =
@@ -55,26 +73,32 @@ impl PrivyService for MyPrivyService {
             Err(_) => return Err(Status::internal("Thread panicked")),
         };
 
-        let category_option = user_pda.categories.get(req.cat_idx.clone() as usize);
-        if let Some(Some(category)) = category_option {
+        let secret = user_row.secret;
+        let iv = b"anexampleiv12345";
+
+        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &secret, iv)).unwrap();
+        let category_index = req.cat_idx as usize;
+
+        let category_option = categories.get(category_index);
+        if let Some(category) = category_option {
             if user_pda.token_limit <= 0 {
                 return Err(Status::permission_denied("User token limit exceeded"));
             }
-
+    
             if !category.enabled {
                 return Err(Status::permission_denied("Category not enabled"));
             }
-
+    
             if category.single_msg
                 && fingerprint_categories
                     .1
-                    .contains(&format!("{}_{}", user_row.user_addr, &req.cat_idx))
+                    .contains(&format!("{}_{}", user_row.user_addr, req.cat_idx))
             {
                 return Err(Status::permission_denied(
                     "Single message already sent for this category",
                 ));
             }
-
+    
             let success_response = GetUserRes {
                 user_addr: user_row.user_addr,
                 passkey_enabled: !category.passkey.is_empty(),
@@ -95,8 +119,52 @@ impl PrivyService for MyPrivyService {
 
         let user_addr = Pubkey::from_str(&req.user_addr).unwrap();
 
+        let user_row = get_user_row_by_addr(&mut connection, &req.user_addr)
+            .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_addr)))?;
+
+        let secret = user_row.secret;
+        let iv = b"anexampleiv12345";
+
+        let user_pda = match thread::spawn(move || get_user_pda_account(&user_addr)).join() {
+            Ok(result) => match result {
+                Ok(pda) => pda,
+                Err(_) => return Err(Status::internal("User not found")),
+            },
+            Err(_) => return Err(Status::internal("Thread panicked")),
+        };
+
+        if user_pda.token_limit <= 0 {
+            return Err(Status::permission_denied("User token limit exceeded"));
+        }
+
+        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &secret, iv)).unwrap();
+        let category_index = req.cat_idx as usize;
+
+        if category_index >= categories.len() {
+            return Err(Status::not_found("Invalid category index"));
+        }
+        let category = match categories.get(category_index) {
+            Some(cat) => cat,
+            None => return Err(Status::not_found("Category not found")),
+        };
+
+        if !category.enabled {
+            return Err(Status::permission_denied("Category disabled"));
+        }
+    
+        if !category.passkey.is_empty() && category.passkey != req.passkey {
+            return Err(Status::permission_denied("Invalid passkey"));
+        }
+    
+        println!("{}", &user_pda.messages);
+        let mut messages: Vec<String> = serde_json::from_str(&decompress_and_decrypt(&user_pda.messages, &secret, iv)).unwrap();
+
+        messages.push(format!("{}:{}", &category_index, &req.message));
+
+        let encrypted_msgs = compress_and_encrypt(&serde_json::to_string(&messages).unwrap(), &secret, iv);
+
         let _ = thread::spawn(move || {
-            insert_message_to_pda(&user_addr, req.cat_idx, req.message, req.passkey)
+            insert_message_to_pda(&user_addr, encrypted_msgs)
         })
         .join()
         .expect("Thread panicked");
@@ -122,9 +190,10 @@ impl PrivyService for MyPrivyService {
         let mut connection = establish_connection();
         let now = Utc::now().naive_utc();
 
-        let new_user = NewUser {
-            user_addr: &req.user_addr,
-            user_name: &req.user_name,
+        let new_user = User {
+            user_addr: req.user_addr,
+            user_name: req.user_name,
+            secret: req.secret,
             created_at: now,
             updated_at: now,
         };
@@ -146,7 +215,8 @@ impl PrivyService for MyPrivyService {
         let now = Utc::now().naive_utc();
 
         let updated_user = UpdatedUser {
-            user_name: &req.user_name,
+            user_name: req.user_name,
+            secret: req.secret,
             updated_at: now,
         };
 
@@ -178,7 +248,7 @@ impl PrivyService for MyPrivyService {
         let req = request.into_inner();
         let mut connection = establish_connection();
 
-        match get_user_by_row_name(&mut connection, &req.user_name) {
+        match get_user_row_by_name(&mut connection, &req.user_name) {
             Some(_) => Ok(Response::new(SuccessRes { success: true })),
             None => Ok(Response::new(SuccessRes { success: false })),
         }

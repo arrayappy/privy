@@ -25,18 +25,6 @@
 - [x] Program V2 (Category + Fingerprint)
 - [x] Server V2 + Wrapup
 
-### Frontend
-- [ ] Project inital setup + cleanup
-- [ ] Frontend Screens
-- [ ] Frontend Wallet Connections
-- [ ] Frontend APIs
-- [ ] Work on receiver and sender UI screens
-- [ ] Making API calls and complete functionality
-
-### Finale
-- [ ] Deployments
-- [ ] README & Wrapping up!
-
 ---
 ## Improvements
 ### Category Plan - Do it before going to frontend
@@ -55,6 +43,25 @@
 - [x]  Server: Get user_categories by fingerprint
 - [x]  Server: Create or insert addr_catIdx into fingerprint
 
+### Encryption
+- [x] Add encryption to messages
+- [x] Add encryption to categories
+- [x] Update server to store secret & other logic
+
+### Frontend
+- [ ] Project inital setup + cleanup
+- [ ] Frontend Screens
+- [ ] Frontend Wallet Connections
+- [ ] Frontend APIs
+- [ ] Work on receiver and sender UI screens
+- [ ] Making API calls and complete functionality
+
+### Finale
+- [ ] Docker Setup
+- [ ] Deployments
+- [ ] README & Wrapping up!
+
 ### Future
 - [ ] Improve DB methods with generic traits
 - [ ] Tokens based on USDC with Pyth SDK + SPL Tokens
+- [ ] Wallet standard encryption

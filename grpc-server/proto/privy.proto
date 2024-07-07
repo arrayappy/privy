@@ -33,6 +33,7 @@ message InsertMessageReq {
 message CreateOrUpdateUserReq {
   string user_addr = 1;
   string user_name = 2;
+  string secret = 3;
 }
 
 message DeleteUserReq {

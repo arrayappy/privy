@@ -33,13 +33,15 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
 (async () => {
   try {
     // Test CreateUser
-    const userAddr = "rusQnt24KNvkFkZmHopzrW9J1BNSBHK9tdu34ecY3fr";
-    const oldUsername = "arrayappy";
-    const newUsername = "naidu";
+    const userAddr = "tesQnt24KNvkFkZmHopzrW9J1BNSBHK9tdu34ecY3fr";
+    const oldUsername = "oldTest";
+    const newUsername = "newTest";
+    const secret = "secret";
 
     // const createUserResponse = await CreateUser({
     //   user_addr: userAddr,
     //   user_name: oldUsername,
+    //   secret: secret
     // });
     // console.log("CreateUser Response:", createUserResponse);
 
@@ -50,11 +52,12 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     // console.log("GetUserByAddr Response:", getUserByAddrResponse);
 
     // // Test UpdateUser
-    // const updateUserResponse = await UpdateUser({
-    //   user_addr: userAddr,
-    //   user_name: newUsername,
-    // });
-    // console.log("UpdateUser Response:", updateUserResponse);
+    const updateUserResponse = await UpdateUser({
+      user_addr: userAddr,
+      user_name: newUsername,
+      secret: secret
+    });
+    console.log("UpdateUser Response:", updateUserResponse);
 
     // // Test GetUserByName
     // const getUserByNameResponse = await GetUserByName({
@@ -73,7 +76,7 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     //   message: "hey1",
     //   fingerprint_id: "finger01",
     //   cat_idx: 0,
-    //   passkey: "",
+    //   passkey: "cat1_secret",
     // });
     // console.log(insertMessageResponse);
 
@@ -84,10 +87,10 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     // });
     // console.log(getUserResponse);
 
-    const checkUsernameExist = await CheckUsernameExist({
-      user_name: newUsername
-    })
-    console.log(checkUsernameExist)
+    // const checkUsernameExist = await CheckUsernameExist({
+    //   user_name: newUsername
+    // })
+    // console.log(checkUsernameExist)
 
   } catch (err) {
     console.error("Error:", err);

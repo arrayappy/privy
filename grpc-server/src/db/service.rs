@@ -1,11 +1,11 @@
 use self::models::Fingerprint;
-use self::models::{NewUser, UpdatedUser, User};
+use self::models::{User, UpdatedUser};
 use crate::db::models;
 use crate::db::schema::fingerprints::dsl::*;
 use crate::db::schema::usernames::dsl::*;
 use diesel::prelude::*;
 
-pub fn get_user_by_row_name(conn: &mut PgConnection, name: &str) -> Option<User> {
+pub fn get_user_row_by_name(conn: &mut PgConnection, name: &str) -> Option<User> {
     usernames
         .filter(user_name.eq(name))
         .first(conn)
@@ -13,7 +13,15 @@ pub fn get_user_by_row_name(conn: &mut PgConnection, name: &str) -> Option<User>
         .expect("Error getting user by addr")
 }
 
-pub fn create_user_row(conn: &mut PgConnection, new_user: NewUser) -> usize {
+pub fn get_user_row_by_addr(conn: &mut PgConnection, addr: &str) -> Option<User> {
+    usernames
+        .filter(user_addr.eq(addr))
+        .first(conn)
+        .optional()
+        .expect("Error getting user by addr")
+}
+
+pub fn create_user_row(conn: &mut PgConnection, new_user: User) -> usize {
     diesel::insert_into(usernames)
         .values(&new_user)
         .execute(conn)
