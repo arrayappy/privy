@@ -43,5 +43,8 @@ RUN chown appuser:appuser /usr/local/bin/grpc-server
 
 USER appuser
 
+# Expose the port the server will run on
+EXPOSE 3000
+
 # Set the entrypoint
 ENTRYPOINT ["/usr/local/bin/grpc-server"]

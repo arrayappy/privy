@@ -263,7 +263,7 @@ impl PrivyService for MyPrivyService {
 }
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::0]:3001".parse().unwrap();
+    let addr = "[::0]:3000".parse().unwrap();
     let privy_service: MyPrivyService = MyPrivyService::default();
     println!("Server listening on {}", addr);
     Server::builder()
