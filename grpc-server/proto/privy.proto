@@ -3,7 +3,6 @@ syntax = "proto3";
 package privy;
 
 service PrivyService {
-  rpc HealthCheck (EmptyReq) returns (SuccessRes);
   rpc InsertMessage (InsertMessageReq) returns (SuccessRes);
   rpc CreateUser (CreateOrUpdateUserReq) returns (SuccessRes);
   rpc UpdateUser (CreateOrUpdateUserReq) returns (SuccessRes);
@@ -11,8 +10,6 @@ service PrivyService {
   rpc GetUser (GetUserReq) returns (GetUserRes);
   rpc CheckUsernameExist (CheckUsernameExistReq) returns (SuccessRes);
 }
-
-message EmptyReq {}
 
 message GetUserReq {
   string user_name = 1;

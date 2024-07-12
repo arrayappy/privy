@@ -1,6 +1,12 @@
 use std::str::FromStr;
 use std::thread;
 
+use std::net::SocketAddr;
+use std::convert::Infallible;
+
+use hyper::{Body, Request, Response, Server};
+use hyper::service::{make_service_fn, service_fn};
+
 use serde;
 use serde_json;
 use serde::Deserialize;
@@ -8,12 +14,12 @@ use serde::Deserialize;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 
 use chrono::Utc;
-use tonic::{transport::Server, Request, Response, Status};
+use tonic::{transport::Server as TServer, Request as TRequest, Response as TResponse, Status};
 
 use privy::privy_service_server::{PrivyService, PrivyServiceServer};
 use privy::{
     CheckUsernameExistReq, CreateOrUpdateUserReq, DeleteUserReq, GetUserReq, GetUserRes,
-    InsertMessageReq, SuccessRes, EmptyReq
+    InsertMessageReq, SuccessRes
 };
 
 mod db;
@@ -50,7 +56,7 @@ pub struct MyPrivyService {}
 
 #[tonic::async_trait]
 impl PrivyService for MyPrivyService {
-    async fn get_user(&self, request: Request<GetUserReq>) -> Result<Response<GetUserRes>, Status> {
+    async fn get_user(&self, request: TRequest<GetUserReq>) -> Result<TResponse<GetUserRes>, Status> {
         let req = request.into_inner();
         println!("Got a request by name: {:?}", req);
 
@@ -103,7 +109,7 @@ impl PrivyService for MyPrivyService {
                 user_addr: user_row.user_addr,
                 passkey_enabled: !category.passkey.is_empty(),
             };
-            Ok(Response::new(success_response))
+            Ok(TResponse::new(success_response))
         } else {
             Err(Status::not_found("Category not found"))
         }
@@ -111,8 +117,8 @@ impl PrivyService for MyPrivyService {
 
     async fn insert_message(
         &self,
-        request: Request<InsertMessageReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
+        request: TRequest<InsertMessageReq>,
+    ) -> Result<TResponse<SuccessRes>, Status> {
         let req = request.into_inner();
 
         let mut connection = establish_connection();
@@ -177,13 +183,13 @@ impl PrivyService for MyPrivyService {
 
         let response = SuccessRes { success: true };
 
-        Ok(Response::new(response))
+        Ok(TResponse::new(response))
     }
 
     async fn create_user(
         &self,
-        request: Request<CreateOrUpdateUserReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
+        request: TRequest<CreateOrUpdateUserReq>,
+    ) -> Result<TResponse<SuccessRes>, Status> {
         let req = request.into_inner();
         println!("Got a request to create user({}): {:?}", req.user_name, req);
 
@@ -199,15 +205,15 @@ impl PrivyService for MyPrivyService {
         };
 
         match create_user_row(&mut connection, new_user) {
-            1 => Ok(Response::new(SuccessRes { success: true })),
+            1 => Ok(TResponse::new(SuccessRes { success: true })),
             _ => Err(Status::internal("Failed to create user")),
         }
     }
 
     async fn update_user(
         &self,
-        request: Request<CreateOrUpdateUserReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
+        request: TRequest<CreateOrUpdateUserReq>,
+    ) -> Result<TResponse<SuccessRes>, Status> {
         let req = request.into_inner();
         println!("Got a request to update user: {:?}", req);
 
@@ -221,54 +227,69 @@ impl PrivyService for MyPrivyService {
         };
 
         match update_user_row(&mut connection, &req.user_addr, updated_user) {
-            1 => Ok(Response::new(SuccessRes { success: true })),
+            1 => Ok(TResponse::new(SuccessRes { success: true })),
             _ => Err(Status::internal("Failed to update user")),
         }
     }
 
     async fn delete_user(
         &self,
-        request: Request<DeleteUserReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
+        request: TRequest<DeleteUserReq>,
+    ) -> Result<TResponse<SuccessRes>, Status> {
         let req = request.into_inner();
         println!("Got a request to delete user: {:?}", req);
 
         let mut connection = establish_connection();
 
         match delete_user_row(&mut connection, &req.user_addr) {
-            Ok(1) => Ok(Response::new(SuccessRes { success: true })),
+            Ok(1) => Ok(TResponse::new(SuccessRes { success: true })),
             Ok(_) => Err(Status::internal("Failed to delete user")),
             Err(_) => Err(Status::internal("Failed to delete user")),
         }
     }
     async fn check_username_exist(
         &self,
-        request: Request<CheckUsernameExistReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
+        request: TRequest<CheckUsernameExistReq>,
+    ) -> Result<TResponse<SuccessRes>, Status> {
         let req = request.into_inner();
         let mut connection = establish_connection();
 
         match get_user_row_by_name(&mut connection, &req.user_name) {
-            Some(_) => Ok(Response::new(SuccessRes { success: true })),
-            None => Ok(Response::new(SuccessRes { success: false })),
+            Some(_) => Ok(TResponse::new(SuccessRes { success: true })),
+            None => Ok(TResponse::new(SuccessRes { success: false })),
         }
     }
-    async fn health_check(
-        &self,
-        _request: Request<EmptyReq>,
-    ) -> Result<Response<SuccessRes>, Status> {
-        let response = SuccessRes { success: true };
-        Ok(Response::new(response))
-    }
 }
+
+async fn health_check(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    Ok(Response::new(Body::from("OK")))
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "0.0.0.0:3000".parse().unwrap();
+    let grpc_addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let http_addr: SocketAddr = "0.0.0.0:8080".parse().unwrap();
+
     let privy_service: MyPrivyService = MyPrivyService::default();
-    println!("Server listening on {}", addr);
-    Server::builder()
+    
+    // Start gRPC server
+    println!("gRPC Server listening on {}", grpc_addr);
+    let grpc_server = TServer::builder()
         .add_service(PrivyServiceServer::new(privy_service))
-        .serve(addr)
-        .await?;
+        .serve(grpc_addr);
+
+    // Start HTTP server for health checks
+    println!("HTTP Server listening on {}", http_addr);
+    let http_server = Server::bind(&http_addr)
+        .serve(make_service_fn(|_conn| async {
+            Ok::<_, Infallible>(service_fn(health_check))
+        }));
+
+    // Run both servers concurrently
+    tokio::select! {
+        _ = grpc_server => println!("gRPC server terminated"),
+        _ = http_server => println!("HTTP server terminated"),
+    }
+
     Ok(())
 }
