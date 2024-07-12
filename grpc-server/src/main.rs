@@ -260,14 +260,10 @@ impl PrivyService for MyPrivyService {
         let response = SuccessRes { success: true };
         Ok(Response::new(response))
     }
-    // async fn hello (&self, request: Request<EmptyReq>) -> Result<Response<SuccessRes, Status> {
-    //     let response = SuccessRes { success: true };
-    //     Ok(Response::new(response))
-    // }
 }
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::0]:3000".parse().unwrap();
+    let addr = "[::0]:3001".parse().unwrap();
     let privy_service: MyPrivyService = MyPrivyService::default();
     println!("Server listening on {}", addr);
     Server::builder()
