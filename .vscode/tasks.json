@@ -8,7 +8,8 @@
                 "Solana Test Validator",
                 "Anchor Build && Deploy",
                 // "Solana Logs",
-                "Anchor Test"
+                "Anchor Test",
+                "GRPC Server Start",
             ],
             "problemMatcher": []
         },
@@ -47,7 +48,7 @@
             "type": "shell",
             "command": "anchor build && anchor deploy",
             "options": {
-                "cwd": "${workspaceFolder}",
+                "cwd": "${workspaceFolder}/program",
                 "shell": {
                     "executable": "/bin/zsh",
                     "args": [
@@ -96,7 +97,7 @@
             "type": "shell",
             "command": "anchor run test",
             "options": {
-                "cwd": "${workspaceFolder}",
+                "cwd": "${workspaceFolder}/program",
                 "shell": {
                     "executable": "/bin/zsh",
                     "args": [
@@ -109,6 +110,25 @@
                 "showReuseMessage": false,
                 "clear": true
             }
-        }
+        },
+        {
+            "label": "GRPC Server Start",
+            "type": "shell",
+            "command": "cargo watch -x run",
+            "options": {
+                "cwd": "${workspaceFolder}/grpc-server",
+                "shell": {
+                    "executable": "/bin/zsh",
+                    "args": [
+                        "-c"
+                    ]
+                }
+            },
+            "presentation": {
+                "panel": "dedicated",
+                "showReuseMessage": false,
+                "clear": true
+            }
+        },
     ]
 }
