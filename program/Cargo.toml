@@ -1,6 +1,5 @@
 [workspace]
 members = [ 
-    "grpc-server",
     "programs/*"
 ]
 resolver = "2"

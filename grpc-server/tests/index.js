@@ -17,7 +17,7 @@ const privyProto = grpc.loadPackageDefinition(packageDefinition).privy;
 
 // Create a client instance
 const client = new privyProto.PrivyService(
-  "127.0.0.1:3000",
+"[::0]:3001".parse().unwrap(),
   grpc.credentials.createInsecure()
 );
 

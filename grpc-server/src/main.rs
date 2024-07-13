@@ -13,7 +13,7 @@ use tonic::{transport::Server, Request, Response, Status};
 use privy::privy_service_server::{PrivyService, PrivyServiceServer};
 use privy::{
     CheckUsernameExistReq, CreateOrUpdateUserReq, DeleteUserReq, GetUserReq, GetUserRes,
-    InsertMessageReq, SuccessRes,
+    InsertMessageReq, SuccessRes, EmptyReq
 };
 
 mod db;
@@ -253,17 +253,26 @@ impl PrivyService for MyPrivyService {
             None => Ok(Response::new(SuccessRes { success: false })),
         }
     }
+    async fn health_check(
+        &self,
+        _request: Request<EmptyReq>,
+    ) -> Result<Response<SuccessRes>, Status> {
+        let response = SuccessRes { success: true };
+        Ok(Response::new(response))
+    }
+    // async fn hello (&self, request: Request<EmptyReq>) -> Result<Response<SuccessRes, Status> {
+    //     let response = SuccessRes { success: true };
+    //     Ok(Response::new(response))
+    // }
 }
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "127.0.0.1:3000".parse().unwrap();
+    let addr = "[::0]:3000".parse().unwrap();
     let privy_service: MyPrivyService = MyPrivyService::default();
-
+    println!("Server listening on {}", addr);
     Server::builder()
         .add_service(PrivyServiceServer::new(privy_service))
         .serve(addr)
         .await?;
-
     Ok(())
 }
