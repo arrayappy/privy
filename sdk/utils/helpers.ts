@@ -10,7 +10,9 @@ function compSymEnc(data: string, key: Buffer, iv: Buffer): string {
 
 function decompSymDec(encryptedData: string, key: Buffer, iv: Buffer): string {
   const decryptedData = symmetric.decrypt(encryptedData, key, iv);
+  console.log('dec', decryptedData)
   const decompressedData = compression.decompress(decryptedData);
+  console.log('decom', decompressedData)
   return decompressedData;
 }
 

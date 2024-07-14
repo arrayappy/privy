@@ -19,7 +19,7 @@ pub fn create_user(
     let vector_size = (deposit_sol * privy_config.tokens_per_sol as f64).floor() as usize;
 
     let computed_space =
-        8 + 4 + 32 + 2 + 4 + 1 * (4 + 32 + 32 + 1 + 1) + 4 + ((4 + 140 + 3) * vector_size) + 1;
+        8 + 4 + 32 + 2 + 4 + 1 * (4 + 32 + 32 + 1 + 1) + 4 + ((4 + 140 + 3) * vector_size) + 1 + 1000;
 
     let rent = &ctx.accounts.rent;
     let privy_user_lamports = rent.minimum_balance(computed_space);

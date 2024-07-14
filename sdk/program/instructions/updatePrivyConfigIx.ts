@@ -1,5 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction, SystemProgram } from "@solana/web3.js";
 import { PrivyProgram } from "../idl";
 import { getPrivyConfigPda } from "../pdas";
 
@@ -7,13 +6,15 @@ export async function updatePrivyConfigIx(
   program: PrivyProgram,
   accounts: { owner: PublicKey },
   args: { newTokensPerSol: number }
-) {
+): Promise<TransactionInstruction> {
   const privyConfigPDA = getPrivyConfigPda(program.programId);
-  await program.methods
+
+  return program.methods
     .updatePrivyConfig(args.newTokensPerSol)
     .accounts({
-      privyConfig: privyConfigPDA,
       owner: accounts.owner,
+      privyConfig: privyConfigPDA,
+      systemProgram: SystemProgram.programId,
     })
-    .rpc();
+    .instruction();
 }

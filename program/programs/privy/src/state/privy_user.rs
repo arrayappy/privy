@@ -10,5 +10,5 @@ pub struct PrivyUser {
 }
 
 impl PrivyUser {
-    pub const USER_SPACE: usize = 8 + 4 + 32 + 2 + 4 + 1 * (4 + 32 + 32 + 1 + 1) + 1;
+    pub const USER_SPACE: usize = 8 + 4 + 32 + 2 + 4 + 1 * (4 + 32 + 32 + 1 + 1) + 1 + 1000;
 }

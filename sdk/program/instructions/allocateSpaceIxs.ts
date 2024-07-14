@@ -1,5 +1,4 @@
-import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { PrivyProgram } from "../idl";
 
 export async function allocateSpaceIx(
@@ -8,7 +7,7 @@ export async function allocateSpaceIx(
   privyUserPDA: PublicKey,
   space: number,
   count: number
-): Promise<anchor.web3.TransactionInstruction[]> {
+): Promise<TransactionInstruction[]> {
   const allocatePromises = [];
   for (let i = 0; i < count; i++) {
     const promise = program.methods

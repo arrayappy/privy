@@ -1,24 +1,23 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, TransactionInstruction } from "@solana/web3.js";
 import { PrivyProgram } from "../idl";
 import { getPrivyConfigPda } from "../pdas";
-import { allocateSpaceIx } from "./allocateSpaceIx";
 
 export async function addTokensIx(
   program: PrivyProgram,
   accounts: { user: PublicKey, privyUser: PublicKey },
-  args: { depositLamports: anchor.BN }
-) {
+  args: { depositLamports: anchor.BN },
+  postIxs: TransactionInstruction[]
+): Promise<TransactionInstruction> {
   const privyConfigPDA = getPrivyConfigPda(program.programId);
-  const allocatePromises = await allocateSpaceIx(program, accounts.user, accounts.privyUser, 10000, 2);
 
-  await program.methods
+  return program.methods
     .addTokens(args.depositLamports)
     .accounts({
       user: accounts.user,
       privyUser: accounts.privyUser,
       privyConfig: privyConfigPDA,
     })
-    .postInstructions(allocatePromises)
-    .rpc();
+    .postInstructions(postIxs)
+    .instruction();
 }
