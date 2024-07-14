@@ -9,7 +9,7 @@
                 "Anchor Build && Deploy",
                 // "Solana Logs",
                 "Anchor Test",
-                "GRPC Server Start",
+                // "GRPC Server Start",
             ],
             "problemMatcher": []
         },

@@ -3,11 +3,9 @@ import { Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { Privy } from "../target/types/privy";
 import { expect } from "chai";
-import {
-  extendKey,
-  compressAndEncrypt,
-  decompressAndDecrypt
-} from "./utils"
+
+import { compSymEnc, decompSymDec } from "@privy/sdk/utils/helpers";
+import { symmetricExtendKey } from "@privy/sdk/utils/symmetric";
 
 const provider = anchor.AnchorProvider.local();
 anchor.setProvider(provider);
@@ -39,7 +37,7 @@ const newTokensPerSol = 100;
 
 let key = "key1";
 let iv = Buffer.from("anexampleiv12345"); // 16 bytes for AES-128
-let extendedKey = extendKey(key, 16);
+let extendedKey = symmetricExtendKey(key, 16);
 
 describe("Privy Config", () => {
   it("Initialize Privy Config", async () => {
@@ -93,7 +91,7 @@ describe("Privy User", () => {
       enabled: true,
       single_msg: false,
     }];
-    const encryptedCategories  = compressAndEncrypt(categories, extendedKey, iv);
+    const encryptedCategories  = compSymEnc(categories, extendedKey, iv);
 
     await program.methods
       .createUser(userData.username, encryptedCategories, new anchor.BN(depositLamports))
@@ -172,7 +170,7 @@ describe("Privy Admin", () => {
     const passkey = "secret";
     const messages = JSON.stringify(["0:hi"]);
 
-    let encryptedMessages = compressAndEncrypt(messages, extendedKey, iv);
+    let encryptedMessages = compSymEnc(messages, extendedKey, iv);
 
     await program.methods.insertMessage(encryptedMessages).accounts({
       owner: provider.wallet.publicKey,
@@ -184,7 +182,7 @@ describe("Privy Admin", () => {
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
     expect(accountData.messages).to.equal(encryptedMessages);
-    expect(decompressAndDecrypt(accountData.messages, extendedKey, iv)).to.equal(messages);
+    expect(decompSymDec(accountData.messages, extendedKey, iv)).to.equal(messages);
   })
 
 });
@@ -203,7 +201,7 @@ describe("Privy User Categories", () => {
       single_msg: true,
     }];
     const categoriesStr = JSON.stringify(categories);
-    const encryptedCategories  = compressAndEncrypt(categoriesStr, extendedKey, iv);
+    const encryptedCategories  = compSymEnc(categoriesStr, extendedKey, iv);
 
     await program.methods
       .updateCategory(encryptedCategories)
@@ -215,15 +213,15 @@ describe("Privy User Categories", () => {
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
     console.log(accountData)
     expect(accountData.categories).to.equal(encryptedCategories);
-    expect(decompressAndDecrypt(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
+    expect(decompSymDec(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
   });
 });
 
 describe("Read", () => {
   it("Read Privy User", async () => {
     const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    accountData.messages = JSON.parse(decompressAndDecrypt(accountData.messages, extendedKey, iv));
-    accountData.categories = JSON.parse(decompressAndDecrypt(accountData.categories, extendedKey, iv));
+    accountData.messages = JSON.parse(decompSymDec(accountData.messages, extendedKey, iv));
+    accountData.categories = JSON.parse(decompSymDec(accountData.categories, extendedKey, iv));
     console.log(accountData)
   });
 });
