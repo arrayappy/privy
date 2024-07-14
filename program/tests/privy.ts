@@ -1,35 +1,29 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
-import { Privy } from "../target/types/privy";
 import { expect } from "chai";
 
 import { compSymEnc, decompSymDec } from "@privy/sdk/utils/helpers";
 import { symmetricExtendKey } from "@privy/sdk/utils/symmetric";
+import { Privy } from "@privy/sdk/program/";
 import {
-  initializePrivyConfig,
-  updatePrivyConfig,
-  createUser,
-  updateUsername,
-  allocateSpace,
-  addTokens,
-  withdrawBalance,
-  insertMessage,
-  updateCategory,
-  readPrivyUser,
-} from "./instructions";
-import { getPrivyConfigPDA, getPrivyUserPDA } from "./state";
+  initializePrivyConfigIx,
+  updatePrivyConfigIx,
+  createUserIx,
+  updateUsernameIx,
+  addTokensIx,
+  withdrawBalanceIx,
+  insertMessageIx,
+  updateCategoryIx,
+  readPrivyUserIx,
+} from "@privy/sdk/program";
 
 const provider = anchor.AnchorProvider.local();
+const program = anchor.workspace.Privy as Program<Privy>;
 
 anchor.setProvider(provider);
 console.log(`Using wallet: ${provider.wallet.publicKey.toString()}`);
 
-const program = anchor.workspace.Privy as Program<Privy>;
 console.log("programId", program.programId.toString());
-
-const privyConfigPDA = getPrivyConfigPDA(program);
-const privyUserPDA = getPrivyUserPDA(program, provider);
 
 const tokensPerSol = 50;
 const newTokensPerSol = 100;
@@ -45,25 +39,25 @@ let extendedKey = symmetricExtendKey(key, 16);
 
 describe("Privy Config", () => {
   it("Initialize Privy Config", async () => {
-    await initializePrivyConfig(program, provider, tokensPerSol, privyConfigPDA);
+    await initializePrivyConfigIx(program, { owner: provider.wallet.publicKey }, { tokensPerSol });
 
-    const configData = await program.account.privyConfig.fetch(privyConfigPDA);
-    expect(configData.tokensPerSol).to.equal(tokensPerSol);
+    const privyConfigPDA = await program.account.privyConfig.all();
+    const configData = privyConfigPDA[0];
+    expect(configData.account.tokensPerSol).to.equal(tokensPerSol);
   });
 
   it("Update Privy Config", async () => {
-    await updatePrivyConfig(program, provider, newTokensPerSol, privyConfigPDA);
+    await updatePrivyConfigIx(program, { owner: provider.wallet.publicKey }, { newTokensPerSol });
 
-    const updatedConfigData = await program.account.privyConfig.fetch(privyConfigPDA);
-    expect(updatedConfigData.tokensPerSol).to.equal(newTokensPerSol);
+    const privyConfigPDA = await program.account.privyConfig.all();
+    const updatedConfigData = privyConfigPDA[0];
+    expect(updatedConfigData.account.tokensPerSol).to.equal(newTokensPerSol);
   });
 });
 
 describe("Privy User", () => {
   it("Create User", async () => {
     const depositLamports = new anchor.BN(1 * anchor.web3.LAMPORTS_PER_SOL);
-
-    const allocatePromises = await allocateSpace(program, provider, privyUserPDA, 10000, 2);
 
     const categories = [{
       cat_name: "cat1",
@@ -73,30 +67,33 @@ describe("Privy User", () => {
     }];
     const encryptedCategories = compSymEnc(categories, extendedKey, iv);
 
-    await createUser(program, provider, userData.username, encryptedCategories, depositLamports, privyUserPDA, privyConfigPDA, allocatePromises);
+    await createUserIx(program, { user: provider.wallet.publicKey }, { username: userData.username, encryptedCategories, depositLamports });
 
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const privyUserPDA = await program.account.privyUser.all();
+    const accountData = privyUserPDA[0];
     console.log("accountData", accountData);
-    expect(accountData.username).to.equal(userData.username);
-    expect(accountData.tokenLimit).to.equal(Math.floor(depositLamports.toNumber() / anchor.web3.LAMPORTS_PER_SOL * newTokensPerSol));
+    expect(accountData.account.username).to.equal(userData.username);
+    expect(accountData.account.tokenLimit).to.equal(Math.floor(depositLamports.toNumber() / anchor.web3.LAMPORTS_PER_SOL * newTokensPerSol));
   });
 
   it("Update Username", async () => {
     const newUsername = "naidu";
-    await updateUsername(program, newUsername, privyUserPDA);
+    const privyUserPDA = await program.account.privyUser.all();
+    const privyUser = privyUserPDA[0].publicKey;
+    await updateUsernameIx(program, { privyUser }, { newUsername });
 
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
-    expect(accountData.username).to.equal(newUsername);
+    const updatedAccountData = await program.account.privyUser.fetch(privyUser);
+    expect(updatedAccountData.username).to.equal(newUsername);
   });
 
   it("Add tokens", async () => {
     const depositLamports = new anchor.BN(1 * anchor.web3.LAMPORTS_PER_SOL);
+    const privyUserPDA = await program.account.privyUser.all();
+    const privyUser = privyUserPDA[0].publicKey;
 
-    const allocatePromises = await allocateSpace(program, provider, privyUserPDA, 10000, 2);
+    await addTokensIx(program, { user: provider.wallet.publicKey, privyUser }, { depositLamports });
 
-    await addTokens(program, provider, depositLamports, privyUserPDA, privyConfigPDA, allocatePromises);
-
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const accountData = await program.account.privyUser.fetch(privyUser);
     const expectedTokensLength = Math.floor((2 * anchor.web3.LAMPORTS_PER_SOL) / anchor.web3.LAMPORTS_PER_SOL * newTokensPerSol);
     expect(accountData.tokenLimit).to.equal(expectedTokensLength);
   });
@@ -105,16 +102,18 @@ describe("Privy User", () => {
 describe("Privy Admin", () => {
   it("Withdraw Balance", async () => {
     const lamports = new anchor.BN(0.4 * anchor.web3.LAMPORTS_PER_SOL);
-    await withdrawBalance(program, provider, lamports, privyConfigPDA);
+    await withdrawBalanceIx(program, { owner: provider.wallet.publicKey }, { lamports });
   });
 
   it("Insert message into messages vector", async () => {
     const messages = JSON.stringify(["0:hi"]);
     const encryptedMessages = compSymEnc(messages, extendedKey, iv);
 
-    await insertMessage(program, provider, encryptedMessages, privyUserPDA, privyConfigPDA);
+    const privyUserPDA = await program.account.privyUser.all();
+    const privyUser = privyUserPDA[0].publicKey;
+    await insertMessageIx(program, { owner: provider.wallet.publicKey, privyUser }, { encryptedMessages });
 
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const accountData = await program.account.privyUser.fetch(privyUser);
     console.log(accountData);
     expect(accountData.messages).to.equal(encryptedMessages);
     expect(decompSymDec(accountData.messages, extendedKey, iv)).to.equal(messages);
@@ -137,9 +136,11 @@ describe("Privy User Categories", () => {
     const categoriesStr = JSON.stringify(categories);
     const encryptedCategories = compSymEnc(categoriesStr, extendedKey, iv);
 
-    await updateCategory(program, encryptedCategories, privyUserPDA);
+    const privyUserPDA = await program.account.privyUser.all();
+    const privyUser = privyUserPDA[0].publicKey;
+    await updateCategoryIx(program, { privyUser }, { encryptedCategories });
 
-    const accountData = await program.account.privyUser.fetch(privyUserPDA);
+    const accountData = await program.account.privyUser.fetch(privyUser);
     console.log(accountData);
     expect(accountData.categories).to.equal(encryptedCategories);
     expect(decompSymDec(accountData.categories, extendedKey, iv)).to.equal(categoriesStr);
@@ -148,33 +149,9 @@ describe("Privy User Categories", () => {
 
 describe("Read", () => {
   it("Read Privy User", async () => {
-    const accountData = await readPrivyUser(program, privyUserPDA, extendedKey, iv);
+    const privyUserPDA = await program.account.privyUser.all();
+    const privyUser = privyUserPDA[0].publicKey;
+    const accountData = await readPrivyUserIx(program, { privyUser }, { extendedKey, iv });
     console.log(accountData);
   });
 });
-
-// // Encryption & compression to be implemented
-// const sleep = async (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-// describe("Load testing for message insertion", function () {
-//   it("should insert the same message 10 times and fail on the 11th attempt", async () => {
-//     for (let batch = 0; batch < 5; batch++) {
-//       const promises = [];
-//       for (let i = batch * 25; i < (batch + 1) * 25; i++) {
-//         const message = `Should insert the same message 10 times and fail on 11th attempt, should insert the same message 10 times and fail on 11th attempt - ${i}`;
-//         promises.push(program.methods.insertMessage(message)
-//           .accounts({
-//             owner: provider.wallet.publicKey,
-//             privyConfig: privyConfigPDA,
-//             privyUser: privyUserPDA,
-//           })
-//           .rpc())
-//       }
-//       console.log(`Batch ${batch + 1} promises`, promises)
-//       await Promise.all(promises)
-//       console.log(`p${batch + 1}`)
-//       await sleep(60000)
-//     }
-//     const accountData = await program.account.privyUser.fetch(privyUserPDA);
-//     console.log(accountData.messages, accountData.messages.length);
-//   })
-// });
