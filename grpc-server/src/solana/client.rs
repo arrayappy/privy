@@ -57,7 +57,7 @@ pub fn insert_message_to_pda(
 
 pub fn get_user_pda_account(
     user_addr: &Pubkey,
-) -> Result<privy::PrivyUser, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<privy::state::PrivyUser, Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let keypair_json = env::var("PRIVY_OWNER_KEYPAIR")?;
     let keypair_bytes: Vec<u8> = serde_json::from_str(&keypair_json)?;
@@ -75,7 +75,7 @@ pub fn get_user_pda_account(
     let (privy_user_pda, _) =
         Pubkey::find_program_address(&[b"privy-user", &user_addr.to_bytes()], &program_id);
 
-    let privy_user_account: privy::PrivyUser = tokio::runtime::Runtime::new()?
+    let privy_user_account: privy::state::PrivyUser = tokio::runtime::Runtime::new()?
         .block_on(async { program.account(privy_user_pda).await })?;
 
     Ok(privy_user_account)
