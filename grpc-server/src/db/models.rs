@@ -1,25 +1,26 @@
-use crate::db::schema::{fingerprints, usernames};
+use crate::db::schema::{fingerprints, users};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // User structs
 #[derive(Queryable, Selectable, Insertable, AsChangeset, Deserialize, Serialize)]
-#[diesel(table_name = usernames)]
+#[diesel(table_name = users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
     pub user_addr: String,
     pub user_name: String,
-    pub secret: String,
+    pub password_salt: String,
+    pub password_pubkey: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
 
 #[derive(AsChangeset, Deserialize, Serialize)]
-#[diesel(table_name = usernames)]
+#[diesel(table_name = users)]
 pub struct UpdatedUser {
     pub user_name: String,
-    pub secret: String,
+    pub password_salt: String,
     pub updated_at: NaiveDateTime,
 }
 

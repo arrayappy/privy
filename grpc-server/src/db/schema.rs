@@ -8,10 +8,11 @@ diesel::table! {
 }
 
 diesel::table! {
-    usernames (user_addr) {
+    users (user_addr) {
         user_addr -> Varchar,
         user_name -> Varchar,
-        secret -> Varchar,
+        password_salt -> Varchar,
+        password_pubkey -> Varchar,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -19,5 +20,5 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     fingerprints,
-    usernames,
+    users,
 );
