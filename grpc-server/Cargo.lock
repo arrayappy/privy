@@ -1831,6 +1831,7 @@ dependencies = [
  "diesel_migrations",
  "dotenvy",
  "flate2",
+ "hyper",
  "privy",
  "prost",
  "serde",

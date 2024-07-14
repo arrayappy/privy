@@ -1,8 +1,11 @@
-use std::env;
 use std::str::FromStr;
 use std::thread;
 
 use std::net::SocketAddr;
+use std::convert::Infallible;
+
+use hyper::{Body, Request, Response, Server};
+use hyper::service::{make_service_fn, service_fn};
 
 use serde;
 use serde_json;
@@ -258,27 +261,35 @@ impl PrivyService for MyPrivyService {
     }
 }
 
+async fn health_check(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    Ok(Response::new(Body::from("Not Dead!")))
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let port: String = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
-    let addr: SocketAddr = format!("0.0.0.0:{}", port).parse()?;
+    let grpc_addr: SocketAddr = "0.0.0.0:3000".parse().unwrap();
+    let http_addr: SocketAddr = "0.0.0.0:8080".parse().unwrap();
 
-    let privy_service = MyPrivyService::default();
-    let privy_service = PrivyServiceServer::new(privy_service);
-    let privy_service = tonic_web::enable(privy_service);
+    let privy_service: MyPrivyService = MyPrivyService::default();
     
-    let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-    health_reporter
-        .set_serving::<PrivyServiceServer<MyPrivyService>>()
-        .await;
+    // Start gRPC server
+    println!("gRPC Server listening on {}", grpc_addr);
+    let grpc_server = TServer::builder()
+        .add_service(PrivyServiceServer::new(privy_service))
+        .serve(grpc_addr);
 
-    println!("Running on {}...", addr);
-    TServer::builder()
-        .accept_http1(true)
-        .add_service(health_service)
-        .add_service(privy_service)
-        .serve(addr)
-        .await?;
+    // Start HTTP server for health checks
+    println!("HTTP Server listening on {}", http_addr);
+    let http_server = Server::bind(&http_addr)
+        .serve(make_service_fn(|_conn| async {
+            Ok::<_, Infallible>(service_fn(health_check))
+        }));
+
+    // Run both servers concurrently
+    tokio::select! {
+        _ = grpc_server => println!("gRPC server terminated"),
+        _ = http_server => println!("HTTP server terminated"),
+    }
 
     Ok(())
 }
