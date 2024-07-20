@@ -5,11 +5,11 @@ import { getPrivyConfigPda } from "../pdas";
 export async function insertMessageIx(
   program: PrivyProgram,
   accounts: { owner: PublicKey, privyUser: PublicKey },
-  args: { encryptedMessages: string }
+  args: { encryptedMessage: string }
 ): Promise<TransactionInstruction> {
   const privyConfigPDA = getPrivyConfigPda(program.programId);
   return program.methods
-    .insertMessage(args.encryptedMessages)
+    .insertMessage(args.encryptedMessage)
     .accounts({
       owner: accounts.owner,
       privyConfig: privyConfigPDA,

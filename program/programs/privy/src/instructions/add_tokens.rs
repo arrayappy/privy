@@ -26,6 +26,7 @@ pub fn add_tokens(ctx: Context<AddTokens>, additional_lamports: u64) -> Result<(
     let privy_config_lamports = additional_lamports.saturating_sub(privy_user_lamports);
 
     privy_user.token_limit = new_token_limit;
+    privy_user.messages.reserve(new_token_limit as usize);
 
     let cpi_accounts = Transfer {
         from: user.to_account_info(),

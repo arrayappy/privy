@@ -51,8 +51,8 @@ pub mod privy {
         instructions::allocate_space(ctx, computed_space)
     }
 
-    pub fn insert_message(ctx: Context<InsertMessage>, messages: String) -> Result<()> {
-        instructions::insert_message(ctx, messages)
+    pub fn insert_message(ctx: Context<InsertMessage>, message: String) -> Result<()> {
+        instructions::insert_message(ctx, message)
     }
 
     pub fn update_category(ctx: Context<UpdateCategory>, categories: String) -> Result<()> {

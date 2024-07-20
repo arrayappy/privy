@@ -19,7 +19,7 @@ import {
   withdrawBalanceIx
 } from "./instructions";
 import { getPrivyConfigPda, getPrivyUserPda } from "./pdas";
-import { decompSymDec } from "../utils/helpers";
+import { decompAsymDec, decompSymDec } from "../utils/helpers";
 
 type AnchorWallet = {
   publicKey: PublicKey;
@@ -112,8 +112,8 @@ export default class PrivySdk {
     return ixToTx(ix);
   }
 
-  async insertMessageTx(owner: PublicKey, privyUser: PublicKey, encryptedMessages: string): Promise<Transaction> {
-    const ix = await insertMessageIx(this.program, { owner, privyUser }, { encryptedMessages });
+  async insertMessageTx(owner: PublicKey, privyUser: PublicKey, encryptedMessage: string): Promise<Transaction> {
+    const ix = await insertMessageIx(this.program, { owner, privyUser }, { encryptedMessage });
     return ixToTx(ix);
   }
 
@@ -122,9 +122,9 @@ export default class PrivySdk {
     return ixToTx(ix);
   }
 
-  async readPrivyUser(privyUser: PublicKey, args: { extendedKey: Buffer, iv: Buffer }) {
+  async readPrivyUser(privyUser: PublicKey, args: { extendedKey: Buffer, iv: Buffer, privateKeyPem: string }) {
     const accountData = await this.program.account.privyUser.fetch(privyUser);
-    accountData.messages = JSON.parse(decompSymDec(accountData.messages, args.extendedKey, args.iv));
+    accountData.messages =  accountData.messages.map((encryptedMsg) => decompAsymDec(encryptedMsg, args.privateKeyPem));
     accountData.categories = JSON.parse(decompSymDec(accountData.categories, args.extendedKey, args.iv));
     return accountData;
   }

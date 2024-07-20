@@ -29,6 +29,7 @@ pub fn create_user(
     privy_user.bump = ctx.bumps.privy_user;
     privy_user.token_limit = vector_size as u16;
     privy_user.categories = categories;
+    privy_user.messages = Vec::with_capacity(vector_size);
 
     let cpi_accounts = Transfer {
         from: user.to_account_info(),

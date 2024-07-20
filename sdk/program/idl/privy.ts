@@ -246,7 +246,7 @@ export type Privy = {
       ],
       "args": [
         {
-          "name": "messages",
+          "name": "message",
           "type": "string"
         }
       ]
@@ -472,7 +472,9 @@ export type Privy = {
           },
           {
             "name": "messages",
-            "type": "string"
+            "type": {
+              "vec": "string"
+            }
           },
           {
             "name": "bump",

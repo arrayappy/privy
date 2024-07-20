@@ -2,12 +2,13 @@ use anchor_lang::prelude::*;
 use crate::state::{PrivyConfig, PrivyUser};
 use crate::errors::CustomError;
 
-pub fn insert_message(ctx: Context<InsertMessage>, messages: String) -> Result<()> {
+pub fn insert_message(ctx: Context<InsertMessage>, encrypted_msg: String) -> Result<()> {
     let privy_user = &mut ctx.accounts.privy_user;
 
     require!(privy_user.token_limit > 0, CustomError::TokenLimitExceeded);
 
-    privy_user.messages = messages;
+    privy_user.messages.push(encrypted_msg);
+
 
     privy_user.token_limit = privy_user
         .token_limit

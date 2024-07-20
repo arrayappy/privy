@@ -31,10 +31,7 @@ mod solana;
 use solana::client::{get_user_pda_account, insert_message_to_pda};
 
 mod encryption;
-use encryption::service::{
-    compress_and_encrypt,
-    decompress_and_decrypt
-};
+use encryption::service::decompress_and_decrypt;
 
 #[derive(Deserialize, Debug)]
 pub struct Category {
@@ -76,10 +73,10 @@ impl PrivyService for MyPrivyService {
             Err(_) => return Err(Status::internal("Thread panicked")),
         };
 
-        let secret = user_row.secret;
+        let password_salt = user_row.password_salt;
         let iv = b"anexampleiv12345";
 
-        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &secret, iv)).unwrap();
+        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &password_salt, iv)).unwrap();
         let category_index = req.cat_idx as usize;
 
         let category_option = categories.get(category_index);
@@ -125,7 +122,7 @@ impl PrivyService for MyPrivyService {
         let user_row = get_user_row_by_addr(&mut connection, &req.user_addr)
             .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_addr)))?;
 
-        let secret = user_row.secret;
+        let password_salt = user_row.password_salt;
         let iv = b"anexampleiv12345";
 
         let user_pda = match thread::spawn(move || get_user_pda_account(&user_addr)).join() {
@@ -140,7 +137,7 @@ impl PrivyService for MyPrivyService {
             return Err(Status::permission_denied("User token limit exceeded"));
         }
 
-        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &secret, iv)).unwrap();
+        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &password_salt, iv)).unwrap();
         let category_index = req.cat_idx as usize;
 
         if category_index >= categories.len() {
@@ -158,16 +155,9 @@ impl PrivyService for MyPrivyService {
         if !category.passkey.is_empty() && category.passkey != req.passkey {
             return Err(Status::permission_denied("Invalid passkey"));
         }
-    
-        println!("{}", &user_pda.messages);
-        let mut messages: Vec<String> = serde_json::from_str(&decompress_and_decrypt(&user_pda.messages, &secret, iv)).unwrap();
-
-        messages.push(format!("{}:{}", &category_index, &req.message));
-
-        let encrypted_msgs = compress_and_encrypt(&serde_json::to_string(&messages).unwrap(), &secret, iv);
-
+        
         let _ = thread::spawn(move || {
-            insert_message_to_pda(&user_addr, encrypted_msgs)
+            insert_message_to_pda(&user_addr, req.encrypted_msg)
         })
         .join()
         .expect("Thread panicked");
@@ -196,7 +186,8 @@ impl PrivyService for MyPrivyService {
         let new_user = User {
             user_addr: req.user_addr,
             user_name: req.user_name,
-            secret: req.secret,
+            password_salt: req.password_salt,
+            password_pubkey: req.password_pubkey,
             created_at: now,
             updated_at: now,
         };
@@ -219,7 +210,7 @@ impl PrivyService for MyPrivyService {
 
         let updated_user = UpdatedUser {
             user_name: req.user_name,
-            secret: req.secret,
+            password_salt: req.password_salt,
             updated_at: now,
         };
 

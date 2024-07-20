@@ -9,7 +9,7 @@ use std::rc::Rc;
 
 pub fn insert_message_to_pda(
     user_addr: &Pubkey,
-    encrypted_msgs: String,
+    encrypted_msg: String,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     dotenv().ok();
     let keypair_json = env::var("PRIVY_OWNER_KEYPAIR")?;
@@ -31,7 +31,7 @@ pub fn insert_message_to_pda(
         Pubkey::find_program_address(&[b"privy-user", &user_addr.to_bytes()], &program_id);
 
     let insert_message_ix = privy::instruction::InsertMessage {
-        messages: encrypted_msgs,
+        message: encrypted_msg,
     };
 
     let insert_message_accounts = privy::accounts::InsertMessage {

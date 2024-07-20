@@ -240,7 +240,7 @@
       ],
       "args": [
         {
-          "name": "messages",
+          "name": "message",
           "type": "string"
         }
       ]
@@ -466,7 +466,9 @@
           },
           {
             "name": "messages",
-            "type": "string"
+            "type": {
+              "vec": "string"
+            }
           },
           {
             "name": "bump",

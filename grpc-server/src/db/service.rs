@@ -2,11 +2,11 @@ use self::models::Fingerprint;
 use self::models::{User, UpdatedUser};
 use crate::db::models;
 use crate::db::schema::fingerprints::dsl::*;
-use crate::db::schema::usernames::dsl::*;
+use crate::db::schema::users::dsl::*;
 use diesel::prelude::*;
 
 pub fn get_user_row_by_name(conn: &mut PgConnection, name: &str) -> Option<User> {
-    usernames
+    users
         .filter(user_name.eq(name))
         .first(conn)
         .optional()
@@ -14,7 +14,7 @@ pub fn get_user_row_by_name(conn: &mut PgConnection, name: &str) -> Option<User>
 }
 
 pub fn get_user_row_by_addr(conn: &mut PgConnection, addr: &str) -> Option<User> {
-    usernames
+    users
         .filter(user_addr.eq(addr))
         .first(conn)
         .optional()
@@ -22,7 +22,7 @@ pub fn get_user_row_by_addr(conn: &mut PgConnection, addr: &str) -> Option<User>
 }
 
 pub fn create_user_row(conn: &mut PgConnection, new_user: User) -> usize {
-    diesel::insert_into(usernames)
+    diesel::insert_into(users)
         .values(&new_user)
         .execute(conn)
         .expect("Error saving new user")
@@ -33,14 +33,14 @@ pub fn update_user_row(
     _user_addr: &str,
     updated_user: UpdatedUser,
 ) -> usize {
-    diesel::update(usernames.filter(user_addr.eq(_user_addr)))
+    diesel::update(users.filter(user_addr.eq(_user_addr)))
         .set(&updated_user)
         .execute(conn)
         .expect("Error updating user")
 }
 
 pub fn delete_user_row(conn: &mut PgConnection, addr: &str) -> QueryResult<usize> {
-    diesel::delete(usernames.filter(user_addr.eq(addr))).execute(conn)
+    diesel::delete(users.filter(user_addr.eq(addr))).execute(conn)
 }
 
 pub fn get_fingerprint_categories(

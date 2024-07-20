@@ -5,7 +5,7 @@ pub struct PrivyUser {
     pub username: String,
     pub token_limit: u16,
     pub categories: String,
-    pub messages: String,
+    pub messages: Vec<String>,
     pub bump: u8,
 }
 

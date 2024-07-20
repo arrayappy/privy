@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import * as asymmetric from "./asymmetric";
 import * as symmetric from "./symmetric";
 import * as compression from "./compression";
@@ -10,9 +11,7 @@ function compSymEnc(data: string, key: Buffer, iv: Buffer): string {
 
 function decompSymDec(encryptedData: string, key: Buffer, iv: Buffer): string {
   const decryptedData = symmetric.decrypt(encryptedData, key, iv);
-  console.log('dec', decryptedData)
   const decompressedData = compression.decompress(decryptedData);
-  console.log('decom', decompressedData)
   return decompressedData;
 }
 
@@ -28,9 +27,14 @@ function decompAsymDec(encryptedData: string, privateKey: string): string {
   return decompressedData;
 }
 
+function getPasswordSalt(password: string): string {
+  return crypto.createHash('md5').update(password).digest('hex');
+}
+
 export {
   compSymEnc,
   decompSymDec,
   compAsymEnc,
-  decompAsymDec
+  decompAsymDec,
+  getPasswordSalt
 }
