@@ -3,21 +3,18 @@ import * as protoLoader from "@grpc/proto-loader";
 import { promisify } from "util";
 
 // Load the proto file
-const packageDefinition = protoLoader.loadSync(
-  "../proto/privy.proto",
-  {
-    keepCase: true,
-    longs: String,
-    enums: String,
-    defaults: true,
-    oneofs: true,
-  }
-);
+const packageDefinition = protoLoader.loadSync("../proto/privy.proto", {
+  keepCase: true,
+  longs: String,
+  enums: String,
+  defaults: true,
+  oneofs: true,
+});
 const privyProto = grpc.loadPackageDefinition(packageDefinition).privy;
 
 // Create a client instance
 const client = new privyProto.PrivyService(
-"[::0]:3001".parse().unwrap(),
+  "0.0.0.0:3000".parse().unwrap(),
   grpc.credentials.createInsecure()
 );
 
@@ -36,12 +33,12 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     const userAddr = "tesQnt24KNvkFkZmHopzrW9J1BNSBHK9tdu34ecY3fr";
     const oldUsername = "oldTest";
     const newUsername = "newTest";
-    const secret = "secret";
+    const password_salt = "password_salt";
 
     // const createUserResponse = await CreateUser({
     //   user_addr: userAddr,
     //   user_name: oldUsername,
-    //   secret: secret
+    //   password_salt: password_salt
     // });
     // console.log("CreateUser Response:", createUserResponse);
 
@@ -52,12 +49,12 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     // console.log("GetUserByAddr Response:", getUserByAddrResponse);
 
     // // Test UpdateUser
-    const updateUserResponse = await UpdateUser({
-      user_addr: userAddr,
-      user_name: newUsername,
-      secret: secret
-    });
-    console.log("UpdateUser Response:", updateUserResponse);
+    // const updateUserResponse = await UpdateUser({
+    //   user_addr: userAddr,
+    //   user_name: newUsername,
+    //   password_salt: password_salt,
+    // });
+    // console.log("UpdateUser Response:", updateUserResponse);
 
     // // Test GetUserByName
     // const getUserByNameResponse = await GetUserByName({
@@ -73,10 +70,10 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
 
     // const insertMessageResponse = await InsertMessage({
     //   user_addr: userAddr,
-    //   message: "hey1",
+    //   encrypted_msg: "hey1",
     //   fingerprint_id: "finger01",
     //   cat_idx: 0,
-    //   passkey: "cat1_secret",
+    //   passkey: "cat_secret",
     // });
     // console.log(insertMessageResponse);
 
@@ -91,7 +88,6 @@ const CheckUsernameExist = promisify(client.CheckUsernameExist).bind(client);
     //   user_name: newUsername
     // })
     // console.log(checkUsernameExist)
-
   } catch (err) {
     console.error("Error:", err);
   }
