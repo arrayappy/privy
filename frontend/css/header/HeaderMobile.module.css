@@ -1,0 +1,38 @@
+.center {
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  padding-bottom: 36px;
+  padding-top: 36px;
+}
+
+.left {
+  align-items: center;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.popoverContent {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 24px;
+}
+
+.right {
+  visibility: hidden;
+}
+
+.row1 {
+  align-items: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.row2 {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}

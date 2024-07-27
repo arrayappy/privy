@@ -1,0 +1,161 @@
+.button {
+  align-items: center;
+  border-radius: 100px;
+  border-style: none;
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  left: 0;
+  padding: 6px;
+  position: relative;
+  outline: none;
+  text-decoration: none;
+  top: 0;
+  transition: left 0.2s, top 0.2s;
+  width: 100%;
+  z-index: 1;
+}
+
+.button:active {
+  /* left: 2px; */
+  top: 2px;
+}
+
+.button:disabled,
+.disabled {
+  background-color: var(--color-ghost) !important;
+  border: 2px solid var(--color-ghost) !important;
+  color: white !important;
+  cursor: default;
+  pointer-events: none;
+}
+
+.button:enabled:hover {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .button:hover {
+    /* left: 2px; */
+    top: 2px;
+  }
+}
+
+.buttonAutoWidth {
+  padding: 8px 24px;
+  width: auto;
+}
+
+.buttonContainer {
+  position: relative;
+}
+
+.icon {
+  /* Fixes https://github.com/vercel/next.js/issues/21914 */
+  font-size: 0px;
+  line-height: 0px;
+}
+
+.iconLeft {
+  margin-right: 10px;
+}
+
+.iconRight {
+  margin-left: 10px;
+}
+
+.linkContent:hover {
+  cursor: pointer;
+}
+
+.shadow {
+  border-radius: 100px;
+  /* left: 5px; */
+  position: absolute;
+  top: 6px;
+}
+
+.shadowDisabled {
+  background-color: var(--color-navy) !important;
+}
+
+/*
+ * Themes
+ */
+
+/* Beige theme */
+
+.beigeTheme,
+.beigeThemeLink {
+  background-color: var(--color-beigeLight);
+  border: 2px solid var(--color-navy);
+  color: var(--color-navy);
+}
+
+.beigeTheme:enabled:active,
+.beigeThemeLink:active {
+  background-color: var(--color-beigeDark);
+}
+
+@media (hover: hover) {
+  .beigeTheme:enabled:hover,
+  .beigeThemeLink:hover {
+    background-color: var(--color-beigeDark);
+  }
+}
+
+.beigeShadowTheme {
+  background-color: var(--color-navy);
+}
+
+/* Winter green theme */
+
+.winterGreenTheme,
+.winterGreenThemeLink {
+  background-color: var(--color-winterGreen);
+  border: 2px solid var(--color-winterGreen);
+  border-bottom: none;
+  color: var(--color-beigeLight);
+}
+
+.winterGreenTheme:enabled:active,
+.winterGreenThemeLink:active {
+  background-color: var(--color-winterGreenHover);
+}
+
+@media (hover: hover) {
+  .winterGreenTheme:enabled:hover,
+  .winterGreenThemeLink:hover {
+    background-color: var(--color-winterGreenHover);
+  }
+}
+
+.winterGreenShadowTheme {
+  background-color: var(--color-navy);
+}
+
+/* Yellow theme */
+
+.yellowTheme,
+.yellowThemeLink {
+  background-color: var(--color-yellow);
+  border: 2px solid var(--color-yellow);
+  border-bottom: none;
+  color: var(--color-beigeLight);
+}
+
+.yellowTheme:enabled:active,
+.yellowThemeLink:active {
+  background-color: var(--color-yellowHover);
+}
+
+@media (hover: hover) {
+  .yellowTheme:enabled:hover,
+  .yellowThemeLink:hover {
+    background-color: var(--color-yellowHover);
+  }
+}
+
+.yellowShadowTheme {
+  background-color: var(--color-navy);
+}

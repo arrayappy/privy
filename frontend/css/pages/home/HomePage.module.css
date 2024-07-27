@@ -1,0 +1,12 @@
+.body {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  row-gap: 72px;
+}
+
+@media only screen and (max-width: 768px) {
+  .body {
+    row-gap: 60px;
+  }
+}

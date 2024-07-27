@@ -1,0 +1,24 @@
+.description {
+  color: var(--color-secondary);
+  margin-bottom: 8px;
+  margin-top: 6px;
+}
+
+.label {
+  color: var(--color-primary);
+}
+
+.labels {
+  align-items: center;
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.hint {
+  margin-top: 6px;
+}
+
+.subLabel {
+  color: var(--color-tertiary);
+  margin-left: 8px;
+}

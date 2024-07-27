@@ -1,0 +1,54 @@
+.wallet-adapter-modal-title {
+  font-family: var(--font-family-header2);
+  font-size: 24px !important;
+  font-weight: var(--font-weight-header2);
+  letter-spacing: var(--letter-spacing-header2);
+  line-height: var(--line-height-header2);
+  text-transform: uppercase;
+
+  color: var(--color-navy);
+}
+
+.wallet-adapter-modal-wrapper {
+  background-color: var(--color-beigeLight);
+}
+
+.wallet-adapter-modal-button-close {
+  background-color: transparent;
+}
+
+.wallet-adapter-modal-button-close svg {
+  fill: var(--color-navy) !important;
+}
+
+.wallet-adapter-button {
+  font-family: var(--font-family-body1);
+  font-size: var(--font-size-body1);
+  font-weight: var(--font-weight-body1);
+  letter-spacing: var(--letter-spacing-body1);
+  line-height: var(--line-height-body1);
+
+  color: var(--color-navy);
+}
+
+.wallet-adapter-button-trigger, .wallet-adapter-button:not([disabled]):hover {
+  background-color: var(--color-beigeDark);
+}
+
+.wallet-adapter-modal-overlay {
+  background-color: var(--color-backgroundOverlay);
+}
+
+.wallet-adapter-modal-list-more {
+  color: var(--color-navy);
+}
+
+.wallet-adapter-modal-list-more svg {
+  fill: var(--color-navy);
+}
+
+@media only screen and (max-width: 400px) {
+  .wallet-adapter-modal-title {
+    font-size: 20px !important;
+  }
+}

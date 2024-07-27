@@ -1,0 +1,85 @@
+:root {
+  /* body1 */
+  --font-family-body1: "Work Sans", sans-serif;
+  --font-size-body1: 18px;
+  --font-weight-body1: 500;
+
+  /* body2 */
+  --font-family-body2: "Work Sans", sans-serif;
+  --font-size-body2: 14px;
+  --font-weight-body2: 400;
+
+  /* body3 */
+  --font-family-body3: "Work Sans", sans-serif;
+  --font-size-body3: 12px;
+  --font-weight-body3: 400;
+
+  /* header0 */
+  --font-family-header0: "Righteous", sans-serif;
+  --font-size-header0: 48px;
+  --font-weight-header0: 400;
+  --letter-spacing-header0: 6px;
+
+  /* header1 */
+  --font-family-header1: "Righteous", sans-serif;
+  --font-size-header1: 32px;
+  --font-weight-header1: 400;
+
+  /* header2 */
+  --font-family-header2: "Righteous", sans-serif;
+  --font-size-header2: 20px;
+  --font-weight-header2: 400;
+}
+
+@media only screen and (max-width: 1024px) {
+  :root {
+    /* header0 */
+    --font-family-header0: "Righteous", sans-serif;
+    --font-size-header0: 42px;
+    --font-weight-header0: 400;
+    --letter-spacing-header0: 4px;
+  }
+}
+
+@media only screen and (max-width: 768px) {
+  :root {
+    /* body1 */
+    --font-family-body1: "Work Sans", sans-serif;
+    --font-size-body1: 16px;
+    --font-weight-body1: 500;
+
+    /* body2 */
+    --font-family-body2: "Work Sans", sans-serif;
+    --font-size-body2: 13px;
+    --font-weight-body2: 400;
+
+    /* body3 */
+    --font-family-body3: "Work Sans", sans-serif;
+    --font-size-body3: 11px;
+    --font-weight-body3: 400;
+
+    /* header0 */
+    --font-family-header0: "Righteous", sans-serif;
+    --font-size-header0: 38px;
+    --font-weight-header0: 400;
+
+    /* header1 */
+    --font-family-header1: "Righteous", sans-serif;
+    --font-size-header1: 24px;
+    --font-weight-header1: 400;
+
+    /* header2 */
+    --font-family-header2: "Righteous", sans-serif;
+    --font-size-header2: 16px;
+    --font-weight-header2: 400;
+  }
+}
+
+@media only screen and (max-width: 640px) {
+  :root {
+    /* header0 */
+    --font-family-header0: "Righteous", sans-serif;
+    --font-size-header0: 32px;
+    --font-weight-header0: 400;
+  }
+}

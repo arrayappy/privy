@@ -1,0 +1,33 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.container {
+  align-items: center;
+  background-color: var(--color-beigeDark);
+  border-radius: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin: auto;
+  max-width: 940px;
+  padding: 64px;
+}
+
+.fadeIn {
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-name: fadeIn;
+}
+
+@media only screen and (max-width: 768px) {
+  .container {
+    padding: 32px;
+  }
+}

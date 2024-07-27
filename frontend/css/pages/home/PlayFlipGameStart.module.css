@@ -1,0 +1,43 @@
+.buttonContent {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+  width: 80px;
+}
+
+.chooseAmount, .chooseHammy {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  row-gap: 24px;
+}
+
+.chooseAmountButton {
+  width: 140px;
+}
+
+.chooseAmountButtons {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.chooseHammyButtons {
+  column-gap: 36px;
+  display: flex;
+}
+
+@media only screen and (max-width: 768px) {
+  .chooseAmount, .chooseHammy {
+    row-gap: 16px;
+  }
+
+  .chooseAmountButton {
+    width: 120px;
+  }
+
+  .chooseHammyButtons {
+    column-gap: 24px;
+  }
+}

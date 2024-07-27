@@ -1,0 +1,15 @@
+:root {
+  --color-backgroundOverlay: rgba(0, 0, 0, 0.3);
+  --color-dimmer: rgba(0, 0, 0, 0.36);
+  --color-beigeDark: #F5ECE5;
+  --color-beigeLight: #F7F2EE;
+  --color-ghost: #C9CFD4;
+  --color-navy: #386D99;
+  --color-navyHover: #164F7D;
+  --color-pink: #E394A5;
+  --color-rust: #C15B38;
+  --color-winterGreen: #47948A;
+  --color-winterGreenHover: #2D877B;
+  --color-yellow: #F39E19;
+  --color-yellowHover: #E38B00;
+}

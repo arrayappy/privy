@@ -1,0 +1,4 @@
+.notification > div {
+  background-color: var(--color-beigeLight);
+  color: var(--color-navy);
+}

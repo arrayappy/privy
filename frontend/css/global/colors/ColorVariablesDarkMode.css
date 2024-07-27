@@ -1,0 +1,13 @@
+:root {
+  --color-backgroundOverlay-darkMode: rgba(0, 0, 0, 0.3);
+  --color-dimmer-darkMode: rgba(0, 0, 0, 0.36);
+  --color-beigeDark-darkMode: #F5ECE5;
+  --color-beigeLight-darkMode: #F7F2EE;
+  --color-ghost-darkMode: #c6c6c6;
+  --color-navy-darkMode: #386D99;
+  --color-navyHover-darkMode: #164F7D;
+  --color-pink-darkMode: #E394A5;
+  --color-rust-darkMode: #C15B38;
+  --color-winterGreen-darkMode: #47948A;
+  --color-yellow-darkMode: #F39E19;
+}

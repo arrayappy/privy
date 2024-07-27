@@ -1,0 +1,26 @@
+.button {
+  align-items: center;
+  background-color: transparent;
+  border-style: none;
+  outline: none;
+  padding: 0;
+  text-decoration: none;
+  text-underline-offset: 6px;
+}
+
+.button:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.iconContainer {
+  margin-right: 12px;
+}
+
+/* Themes */
+
+.buttonNavy,
+.buttonNavyActive,
+.buttonNavy:hover {
+  color: var(--color-navy);
+}

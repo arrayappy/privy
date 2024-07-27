@@ -1,0 +1,21 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.container {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 32px;
+
+  animation-duration: 0.5s;
+  animation-fill-mode: forwards;
+  animation-name: fadeIn;
+}
