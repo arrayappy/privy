@@ -1987,28 +1987,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "grpc-server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-web",
- "aes",
- "anchor-client",
- "base64 0.13.1",
- "block-modes",
- "block-padding",
- "brotli 3.5.0",
- "chrono",
- "diesel",
- "diesel_migrations",
- "dotenvy",
- "flate2",
- "privy",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "h2"
 version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3622,6 +3600,28 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.72",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-web",
+ "aes",
+ "anchor-client",
+ "base64 0.13.1",
+ "block-modes",
+ "block-padding",
+ "brotli 3.5.0",
+ "chrono",
+ "diesel",
+ "diesel_migrations",
+ "dotenvy",
+ "flate2",
+ "privy",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

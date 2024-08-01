@@ -8,7 +8,7 @@
     "watch": "tsc -watch",
     "link": "tsc && npm link",
     "test": "ts-node test.ts",
-    "config-sync": "mkdir -p server/proto && cp ../grpc-server/proto/privy.proto server/proto/privy.proto && mkdir -p program/idl && cp ../program/target/idl/privy.json program/idl/privy.json && cp ../program/target/types/privy.ts program/idl/privy.ts",
+    "config-sync": "mkdir -p server/proto && cp ../server/proto/privy.proto server/proto/privy.proto && mkdir -p program/idl && cp ../program/target/idl/privy.json program/idl/privy.json && cp ../program/target/types/privy.ts program/idl/privy.ts",
     "clean": "rm -rf lib"
   },
   "keywords": [],
