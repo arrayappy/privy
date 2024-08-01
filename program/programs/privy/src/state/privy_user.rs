@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 #[account]
+#[derive(Debug)]
 pub struct PrivyUser {
     pub username: String,
     pub token_limit: u16,
