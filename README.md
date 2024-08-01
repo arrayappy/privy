@@ -22,13 +22,14 @@
 Privy is a Solana Devnet SOL application for receiving spam-free private messages through a sharable user link. The receiver pays the transaction fees using a relayer backend service while ensuring client-side message encryption. The project implements token management, categorization, passkey mechanisms, link disabling, and single-message reception.
 
 - [Solana program for Privy](./program/README.md)
-- [Backend code for Privy](./grpc-server/README.md)
+- [Backend code for Privy](./server/README.md)
 - [TypeScript SDK for Privy](./sdk/README.md)
 - [Frontend code for Privy](./frontend/README.md)
 
 ### User Flow
 
 - **User 1 - Message Receiver**
+
   - Sign up using Solana wallet and create a username and password
   - Buy tokens (currently Devnet SOL)
   - Optionally configure account and categories
@@ -67,6 +68,7 @@ Privy is a Solana Devnet SOL application for receiving spam-free private message
 ### Technical User Flow
 
 - **User 1 (Message Receiver)**
+
   1. Sign Up: Sign up using Solana wallet and create a username and password.
   2. Token Purchase: Select the token amount and click buy.
   3. Space Allocation: Calculate the amount of space required for storing messages and send allocate_space transactions with create_user transactions.
@@ -123,24 +125,23 @@ Privy is a Solana Devnet SOL application for receiving spam-free private message
 
 9. **`update_category`**: Updates the categories associated with a Privy user account, typically used for message filtering and categorization.
 
-
 ### Database Schemaa
 
 **Table: `fingerprints`**
 
-| Column           | Type     | Description                   |
-|------------------|----------|-------------------------------|
-| `id`             | Varchar  | Primary key, unique identifier for the fingerprint |
-| `user_categories`| Varchar  | Stores user-specific category data |
+| Column            | Type    | Description                                        |
+| ----------------- | ------- | -------------------------------------------------- |
+| `id`              | Varchar | Primary key, unique identifier for the fingerprint |
+| `user_categories` | Varchar | Stores user-specific category data                 |
 
 **Table: `users`**
 
-| Column            | Type        | Description                           |
-|-------------------|-------------|---------------------------------------|
-| `user_addr`       | Varchar     | Primary key, unique user address      |
-| `user_name`       | Varchar     | Username associated with the user     |
-| `password_salt`   | Varchar     | Salt used for password hashing        |
-| `password_pubkey` | Varchar     | Public key used for password encryption |
+| Column            | Type    | Description                             |
+| ----------------- | ------- | --------------------------------------- |
+| `user_addr`       | Varchar | Primary key, unique user address        |
+| `user_name`       | Varchar | Username associated with the user       |
+| `password_salt`   | Varchar | Salt used for password hashing          |
+| `password_pubkey` | Varchar | Public key used for password encryption |
 
 ## Repo Structure
 
@@ -149,7 +150,7 @@ This repo contains the Solana program source code and client-side program tests 
 ```.
 ├── .vscode             # Program keypairs
 ├── frontend            # Solana program source code
-├── grpc-server         # Backend server helper bash scripts
+├── server         # Backend server helper bash scripts
 ├── program             # TypeScript source folder
 ├── sdk                 # TypeScript source folder
 └── README.md
@@ -158,7 +159,7 @@ This repo contains the Solana program source code and client-side program tests 
 ## Development
 
 1. Follow the [program]() guide and deploy the program.
-2. Follow the [grpc-server]() guide, run the db migrations, and start the server.
+2. Follow the [server]() guide, run the db migrations, and start the server.
 3. For running the [frontend](), install the dependencies along with the [sdk]() and start the server.
 
 ## Future Scope

@@ -116,7 +116,7 @@
             "type": "shell",
             "command": "cargo watch -x run",
             "options": {
-                "cwd": "${workspaceFolder}/grpc-server",
+                "cwd": "${workspaceFolder}/server",
                 "shell": {
                     "executable": "/bin/zsh",
                     "args": [
