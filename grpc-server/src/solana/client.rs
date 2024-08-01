@@ -6,6 +6,7 @@ use anchor_client::Cluster;
 use dotenvy::dotenv;
 use std::env;
 use std::rc::Rc;
+use actix_web::rt::Runtime;
 
 pub fn insert_message_to_pda(
     user_addr: &Pubkey,
@@ -42,7 +43,7 @@ pub fn insert_message_to_pda(
 
     let insert_message_payer = &payer;
 
-    let _ = tokio::runtime::Runtime::new()?.block_on(async {
+    let _ = Runtime::new()?.block_on(async {
         program
             .request()
             .args(insert_message_ix)
@@ -75,8 +76,10 @@ pub fn get_user_pda_account(
     let (privy_user_pda, _) =
         Pubkey::find_program_address(&[b"privy-user", &user_addr.to_bytes()], &program_id);
 
-    let privy_user_account: privy::state::PrivyUser = tokio::runtime::Runtime::new()?
+
+    let privy_user_account: privy::state::PrivyUser = Runtime::new()?
         .block_on(async { program.account(privy_user_pda).await })?;
+
 
     Ok(privy_user_account)
 }

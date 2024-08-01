@@ -2,22 +2,12 @@ use std::env;
 use std::str::FromStr;
 use std::thread;
 
-use std::net::SocketAddr;
-
-use serde;
-use serde_json;
-use serde::Deserialize;
+use actix_cors::Cors;
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use serde::{Deserialize, Serialize};
 
 use anchor_client::solana_sdk::pubkey::Pubkey;
-
 use chrono::Utc;
-use tonic::{transport::Server as TServer, Request as TRequest, Response as TResponse, Status};
-
-use privy::privy_service_server::{PrivyService, PrivyServiceServer};
-use privy::{
-    CheckUsernameExistReq, CreateOrUpdateUserReq, DeleteUserReq, GetUserReq, GetUserRes,
-    InsertMessageReq, SuccessRes
-};
 
 mod db;
 use db::connection::establish_connection;
@@ -41,235 +31,258 @@ pub struct Category {
     pub single_msg: bool,
 }
 
-pub mod privy {
-    tonic::include_proto!("privy");
+// Request and Response structs
+#[derive(Deserialize, Debug)]
+struct GetUserReq {
+    user_name: String,
+    cat_idx: u32,
+    fingerprint_id: String,
 }
 
-#[derive(Debug, Default)]
-pub struct MyPrivyService {}
+#[derive(Serialize)]
+struct GetUserRes {
+    user_addr: String,
+    passkey_enabled: bool,
+}
 
-#[tonic::async_trait]
-impl PrivyService for MyPrivyService {
-    async fn get_user(&self, request: TRequest<GetUserReq>) -> Result<TResponse<GetUserRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request by name: {:?}", req);
+#[derive(Deserialize, Debug)]
+struct InsertMessageReq {
+    user_addr: String,
+    cat_idx: u32,
+    encrypted_msg: String,
+    passkey: String,
+    fingerprint_id: String,
+}
 
-        let mut connection = establish_connection();
+#[derive(Deserialize, Debug)]
+struct CreateOrUpdateUserReq {
+    user_addr: String,
+    user_name: String,
+    password_salt: String,
+    password_pubkey: String,
+}
 
-        let user_row = get_user_row_by_name(&mut connection, &req.user_name)
-            .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_name)))?;
+#[derive(Deserialize, Debug)]
+struct DeleteUserReq {
+    user_addr: String,
+}
 
-        let fingerprint_categories =
-            get_fingerprint_categories(&mut connection, &req.fingerprint_id)
-                .unwrap_or((String::new(), Vec::new()));
+#[derive(Serialize)]
+struct SuccessRes {
+    success: bool,
+}
 
-        let user_pub_key: Pubkey = Pubkey::from_str(&user_row.user_addr).unwrap();
+#[derive(Deserialize, Debug)]
+struct CheckUsernameExistReq {
+    user_name: String,
+}
 
-        let user_pda = match thread::spawn(move || get_user_pda_account(&user_pub_key)).join() {
-            Ok(result) => match result {
-                Ok(pda) => pda,
-                Err(_) => return Err(Status::internal("User not found")),
-            },
-            Err(_) => return Err(Status::internal("Thread panicked")),
-        };
+// Handler functions
+async fn get_user(req: web::Json<GetUserReq>) -> impl Responder {
+    let mut connection = establish_connection();
 
-        let password_salt = user_row.password_salt;
-        let iv = b"anexampleiv12345";
+    let user_row = match get_user_row_by_name(&mut connection, &req.user_name) {
+        Some(user) => user,
+        None => return HttpResponse::NotFound().json(format!("User not found: {}", req.user_name)),
+    };
 
-        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &password_salt, iv)).unwrap();
-        let category_index = req.cat_idx as usize;
+    let fingerprint_categories = get_fingerprint_categories(&mut connection, &req.fingerprint_id)
+        .unwrap_or((String::new(), Vec::new()));
 
-        let category_option = categories.get(category_index);
-        if let Some(category) = category_option {
-            if user_pda.token_limit <= 0 {
-                return Err(Status::permission_denied("User token limit exceeded"));
-            }
+    let user_pub_key = match Pubkey::from_str(&user_row.user_addr) {
+        Ok(key) => key,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+
+    let user_pda = match thread::spawn(move || get_user_pda_account(&user_pub_key)).join() {
+        Ok(Ok(pda)) => pda,
+        _ => return HttpResponse::InternalServerError().body("User not found"),
+    };
+
+    let password_salt = user_row.password_salt;
+    let iv = b"anexampleiv12345";
+
+    let categories: Vec<Category> = serde_json::from_str(
+        &decompress_and_decrypt(&user_pda.categories, &password_salt, iv)
+    ).unwrap();
     
-            if !category.enabled {
-                return Err(Status::permission_denied("Category not enabled"));
-            }
-    
-            if category.single_msg
-                && fingerprint_categories
-                    .1
-                    .contains(&format!("{}_{}", user_row.user_addr, req.cat_idx))
-            {
-                return Err(Status::permission_denied(
-                    "Single message already sent for this category",
-                ));
-            }
-    
-            let success_response = GetUserRes {
-                user_addr: user_row.user_addr,
-                passkey_enabled: !category.passkey.is_empty(),
-            };
-            Ok(TResponse::new(success_response))
-        } else {
-            Err(Status::not_found("Category not found"))
-        }
+    let category = match categories.get(req.cat_idx as usize) {
+        Some(cat) => cat,
+        None => return HttpResponse::NotFound().body("Category not found"),
+    };
+
+    if user_pda.token_limit <= 0 {
+        return HttpResponse::Forbidden().body("User token limit exceeded");
     }
 
-    async fn insert_message(
-        &self,
-        request: TRequest<InsertMessageReq>,
-    ) -> Result<TResponse<SuccessRes>, Status> {
-        let req = request.into_inner();
-
-        let mut connection = establish_connection();
-
-        let user_addr = Pubkey::from_str(&req.user_addr).unwrap();
-
-        let user_row = get_user_row_by_addr(&mut connection, &req.user_addr)
-            .ok_or_else(|| Status::not_found(format!("User not found: {}", req.user_addr)))?;
-
-        let password_salt = user_row.password_salt;
-        let iv = b"anexampleiv12345";
-
-        let user_pda = match thread::spawn(move || get_user_pda_account(&user_addr)).join() {
-            Ok(result) => match result {
-                Ok(pda) => pda,
-                Err(_) => return Err(Status::internal("User not found")),
-            },
-            Err(_) => return Err(Status::internal("Thread panicked")),
-        };
-
-        if user_pda.token_limit <= 0 {
-            return Err(Status::permission_denied("User token limit exceeded"));
-        }
-
-        let categories: Vec<Category> = serde_json::from_str(&decompress_and_decrypt(&user_pda.categories, &password_salt, iv)).unwrap();
-        let category_index = req.cat_idx as usize;
-
-        if category_index >= categories.len() {
-            return Err(Status::not_found("Invalid category index"));
-        }
-        let category = match categories.get(category_index) {
-            Some(cat) => cat,
-            None => return Err(Status::not_found("Category not found")),
-        };
-
-        if !category.enabled {
-            return Err(Status::permission_denied("Category disabled"));
-        }
-    
-        if !category.passkey.is_empty() && category.passkey != req.passkey {
-            return Err(Status::permission_denied("Invalid passkey"));
-        }
-        
-        let _ = thread::spawn(move || {
-            insert_message_to_pda(&user_addr, req.encrypted_msg)
-        })
-        .join()
-        .expect("Thread panicked");
-
-        append_fingerprint(
-            &mut connection,
-            &req.fingerprint_id,
-            format!("{}_{}", req.user_addr, req.cat_idx),
-        );
-
-        let response = SuccessRes { success: true };
-
-        Ok(TResponse::new(response))
+    if !category.enabled {
+        return HttpResponse::Forbidden().body("Category not enabled");
     }
 
-    async fn create_user(
-        &self,
-        request: TRequest<CreateOrUpdateUserReq>,
-    ) -> Result<TResponse<SuccessRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request to create user({}): {:?}", req.user_name, req);
-
-        let mut connection = establish_connection();
-        let now = Utc::now().naive_utc();
-
-        let new_user = User {
-            user_addr: req.user_addr,
-            user_name: req.user_name,
-            password_salt: req.password_salt,
-            password_pubkey: req.password_pubkey,
-            created_at: now,
-            updated_at: now,
-        };
-
-        match create_user_row(&mut connection, new_user) {
-            1 => Ok(TResponse::new(SuccessRes { success: true })),
-            _ => Err(Status::internal("Failed to create user")),
-        }
+    if category.single_msg
+        && fingerprint_categories
+            .1
+            .contains(&format!("{}_{}", user_row.user_addr, req.cat_idx))
+    {
+        return HttpResponse::Forbidden().body("Single message already sent for this category");
     }
 
-    async fn update_user(
-        &self,
-        request: TRequest<CreateOrUpdateUserReq>,
-    ) -> Result<TResponse<SuccessRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request to update user: {:?}", req);
+    HttpResponse::Ok().json(GetUserRes {
+        user_addr: user_row.user_addr,
+        passkey_enabled: !category.passkey.is_empty(),
+    })
+}
 
-        let mut connection = establish_connection();
-        let now = Utc::now().naive_utc();
+async fn insert_message(req: web::Json<InsertMessageReq>) -> impl Responder {
+    let mut connection = establish_connection();
 
-        let updated_user = UpdatedUser {
-            user_name: req.user_name,
-            password_salt: req.password_salt,
-            updated_at: now,
-        };
+    let user_addr = match Pubkey::from_str(&req.user_addr) {
+        Ok(addr) => addr,
+        Err(_) => return HttpResponse::BadRequest().body("Invalid user address"),
+    };
 
-        match update_user_row(&mut connection, &req.user_addr, updated_user) {
-            1 => Ok(TResponse::new(SuccessRes { success: true })),
-            _ => Err(Status::internal("Failed to update user")),
-        }
+    let user_row = match get_user_row_by_addr(&mut connection, &req.user_addr) {
+        Some(user) => user,
+        None => return HttpResponse::NotFound().json(format!("User not found: {}", req.user_addr)),
+    };
+
+    let password_salt = user_row.password_salt;
+    let iv = b"anexampleiv12345";
+
+    let user_pda = match thread::spawn(move || get_user_pda_account(&user_addr)).join() {
+        Ok(Ok(pda)) => pda,
+        _ => return HttpResponse::InternalServerError().body("User not found"),
+    };
+
+    if user_pda.token_limit <= 0 {
+        return HttpResponse::Forbidden().body("User token limit exceeded");
     }
 
-    async fn delete_user(
-        &self,
-        request: TRequest<DeleteUserReq>,
-    ) -> Result<TResponse<SuccessRes>, Status> {
-        let req = request.into_inner();
-        println!("Got a request to delete user: {:?}", req);
+    let categories: Vec<Category> = serde_json::from_str(
+        &decompress_and_decrypt(&user_pda.categories, &password_salt, iv)
+    ).unwrap();
 
-        let mut connection = establish_connection();
+    let category = match categories.get(req.cat_idx as usize) {
+        Some(cat) => cat,
+        None => return HttpResponse::NotFound().body("Category not found"),
+    };
 
-        match delete_user_row(&mut connection, &req.user_addr) {
-            Ok(1) => Ok(TResponse::new(SuccessRes { success: true })),
-            Ok(_) => Err(Status::internal("Failed to delete user")),
-            Err(_) => Err(Status::internal("Failed to delete user")),
-        }
+    if !category.enabled {
+        return HttpResponse::Forbidden().body("Category disabled");
     }
-    async fn check_username_exist(
-        &self,
-        request: TRequest<CheckUsernameExistReq>,
-    ) -> Result<TResponse<SuccessRes>, Status> {
-        let req = request.into_inner();
-        let mut connection = establish_connection();
 
-        match get_user_row_by_name(&mut connection, &req.user_name) {
-            Some(_) => Ok(TResponse::new(SuccessRes { success: true })),
-            None => Ok(TResponse::new(SuccessRes { success: false })),
-        }
+    if !category.passkey.is_empty() && category.passkey != req.passkey {
+        return HttpResponse::Forbidden().body("Invalid passkey");
+    }
+
+    // Clone the values needed in the thread
+    let encrypted_msg = req.encrypted_msg.clone();
+    let fingerprint_id = req.fingerprint_id.clone();
+    let cat_idx = req.cat_idx;
+    let user_addr_str = req.user_addr.clone();
+
+    if let Err(_) = thread::spawn(move || {
+        insert_message_to_pda(&user_addr, encrypted_msg)
+    })
+    .join()
+    {
+        return HttpResponse::InternalServerError().body("Failed to insert message");
+    }
+
+    append_fingerprint(
+        &mut connection,
+        &fingerprint_id,
+        format!("{}_{}", user_addr_str, cat_idx),
+    );
+
+    HttpResponse::Ok().json(SuccessRes { success: true })
+}
+
+async fn create_user(req: web::Json<CreateOrUpdateUserReq>) -> impl Responder {
+    println!("Got a request to create user({}): {:?}", req.user_name, req);
+
+    let mut connection = establish_connection();
+    let now = Utc::now().naive_utc();
+
+    let new_user = User {
+        user_addr: req.user_addr.clone(),
+        user_name: req.user_name.clone(),
+        password_salt: req.password_salt.clone(),
+        password_pubkey: req.password_pubkey.clone(),
+        created_at: now,
+        updated_at: now,
+    };
+
+    match create_user_row(&mut connection, new_user) {
+        1 => HttpResponse::Ok().json(SuccessRes { success: true }),
+        _ => HttpResponse::InternalServerError().body("Failed to create user"),
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let port: String = env::var("PORT").unwrap_or_else(|_| "3000".to_string());
-    let addr: SocketAddr = format!("0.0.0.0:{}", port).parse()?;
+async fn update_user(req: web::Json<CreateOrUpdateUserReq>) -> impl Responder {
+    println!("Got a request to update user: {:?}", req);
 
-    let privy_service = MyPrivyService::default();
-    let privy_service = PrivyServiceServer::new(privy_service);
-    let privy_service = tonic_web::enable(privy_service);
-    
-    let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
-    health_reporter
-        .set_serving::<PrivyServiceServer<MyPrivyService>>()
-        .await;
+    let mut connection = establish_connection();
+    let now = Utc::now().naive_utc();
 
-    println!("Running on {}...", addr);
-    TServer::builder()
-        .accept_http1(true)
-        .add_service(health_service)
-        .add_service(privy_service)
-        .serve(addr)
-        .await?;
+    let updated_user = UpdatedUser {
+        user_name: req.user_name.clone(),
+        password_salt: req.password_salt.clone(),
+        updated_at: now,
+    };
 
-    Ok(())
+    match update_user_row(&mut connection, &req.user_addr, updated_user) {
+        1 => HttpResponse::Ok().json(SuccessRes { success: true }),
+        _ => HttpResponse::InternalServerError().body("Failed to update user"),
+    }
+}
+
+async fn delete_user(req: web::Json<DeleteUserReq>) -> impl Responder {
+    println!("Got a request to delete user: {:?}", req);
+
+    let mut connection = establish_connection();
+
+    match delete_user_row(&mut connection, &req.user_addr) {
+        Ok(1) => HttpResponse::Ok().json(SuccessRes { success: true }),
+        _ => HttpResponse::InternalServerError().body("Failed to delete user"),
+    }
+}
+
+async fn check_username_exist(req: web::Json<CheckUsernameExistReq>) -> impl Responder {
+    let mut connection = establish_connection();
+
+    match get_user_row_by_name(&mut connection, &req.user_name) {
+        Some(_) => HttpResponse::Ok().json(SuccessRes { success: true }),
+        None => HttpResponse::Ok().json(SuccessRes { success: false }),
+    }
+}
+
+// Add this new handler function before main()
+async fn status() -> impl Responder {
+    HttpResponse::Ok().json(SuccessRes { success: true })
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // Replace the port configuration
+    let addr = "127.0.0.1:8081";
+
+    println!("Running on port 8081...");
+
+    HttpServer::new(|| {
+        let cors = Cors::permissive();
+
+        App::new()
+            .wrap(cors)
+            .route("/status", web::get().to(status))  // Add the status endpoint
+            .route("/get_user", web::post().to(get_user))
+            .route("/insert_message", web::post().to(insert_message))
+            .route("/create_user", web::post().to(create_user))
+            .route("/update_user", web::post().to(update_user))
+            .route("/delete_user", web::post().to(delete_user))
+            .route("/check_username_exist", web::post().to(check_username_exist))
+    })
+    .bind(addr)?
+    .run()
+    .await
 }

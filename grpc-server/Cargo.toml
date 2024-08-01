@@ -7,12 +7,9 @@ edition = "2021"
 chrono = "0.4.38"
 diesel = { version = "2.2.0", features = ["postgres", "chrono"] }
 dotenvy = "0.15"
-prost = "0.12.6"
-tokio = { version = "1.37.0", features = ["macros", "rt-multi-thread", "full"] }
-tonic = "0.11.0"
 anchor-client = { version = "0.30.0 ", features = ["async"] }
 privy = { path = "../program/programs/privy", features = ["no-entrypoint"] }
-serde = "1.0.203"
+serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.120"
 flate2 = "1.0"
 aes = "0.7"
@@ -20,12 +17,12 @@ block-modes = "0.8"
 block-padding = "0.2"
 base64 = "0.13"
 brotli = "3.3.4"
-tonic-web = "0.11.0"
-tonic-health = "0.11.0"
+actix-web = "4.4.0"
+actix-cors = "0.6.4"
 
 [dependencies.diesel_migrations]
 version = "2.2.0"
 features = ["postgres"]
 
-[build-dependencies]
-tonic-build = "0.11.0"
+[profile.dev]
+incremental = true

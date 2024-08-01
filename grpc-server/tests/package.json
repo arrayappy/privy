@@ -1,16 +1,14 @@
 {
-  "name": "grpc-node-client",
+  "name": "http-client-tests",
   "version": "0.1.0",
-  "description": "Rust <-> Node communication using gRPC",
+  "description": "HTTP API tests using axios",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "node index.js"
   },
   "license": "ISC",
   "dependencies": {
-    "@grpc/grpc-js": "^1.5.7",
-    "@grpc/proto-loader": "^0.6.9"
+    "axios": "^1.6.7"
   }
 }
