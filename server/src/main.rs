@@ -4,6 +4,7 @@ use std::thread;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use dotenvy::dotenv;
 use serde::{Deserialize, Serialize};
 
 use anchor_client::solana_sdk::pubkey::Pubkey;
@@ -264,10 +265,11 @@ async fn status() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Replace the port configuration
-    let addr = "127.0.0.1:8081";
+    dotenv().ok();
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = format!("127.0.0.1:{}", port);
 
-    println!("Running on port 8081...");
+    println!("Running on port {}...", port);
 
     HttpServer::new(|| {
         let cors = Cors::permissive();
