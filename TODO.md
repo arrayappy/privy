@@ -49,17 +49,12 @@
 - [x] Update server to store secret & other logic
 
 ### Frontend
-- [ ] Project inital setup + cleanup
+- [x] Project inital setup + cleanup
 - [ ] Frontend Screens
 - [ ] Frontend Wallet Connections
 - [ ] Frontend APIs
 - [ ] Work on receiver and sender UI screens
 - [ ] Making API calls and complete functionality
-
-### Finale
-- [ ] Docker Setup
-- [ ] Deployments
-- [ ] README & Wrapping up!
 
 ### Future
 - [ ] Improve DB methods with generic traits

@@ -19,7 +19,7 @@
 
 ## Overview
 
-Privy is a Solana Devnet SOL application for receiving spam-free private messages through a sharable user link. The receiver pays the transaction fees using a relayer backend service while ensuring client-side message encryption. The project implements token management, categorization, passkey mechanisms, link disabling, and single-message reception.
+Privy is a Solana application for receiving spam-free private messages through a sharable user link. The receiver pays the transaction fees using a relayer backend service while ensuring client-side message encryption. The project implements token management, categorization, passkey mechanisms, link disabling, and single-message reception.
 
 - [Solana program for Privy](./program/README.md)
 - [Backend code for Privy](./server/README.md)
@@ -32,19 +32,19 @@ Privy is a Solana Devnet SOL application for receiving spam-free private message
 
   - Sign up using Solana wallet and create a username and password
   - Buy tokens (currently Devnet SOL)
-  - Optionally configure account and categories
   - Share the link and start receiving messages
+  - Optionally configure account and categories
 
 - **User 2 - Message Sender**
   - Access the shared link and type a message
-  - Optionally type a passkey (to reduce spam)
-  - Click send
+  - Optionally type a passkey (to reduce spam user 1 can set)
+  - Click send message
 
 ### Features
 
+- Client-side message encryption
 - Spam-free private messaging via a sharable user link
 - Receiver pays transaction fees through a relayer backend service
-- Client-side message encryption
 - Token management, categorization, passkey mechanisms
 - Link disabling and single-message receiving features
 
@@ -56,7 +56,7 @@ Privy is a Solana Devnet SOL application for receiving spam-free private message
 ## Tech Stack
 
 - **Smart Contract (Program)**: Rust, Solana, Anchor Lang, Chai Tests
-- **Backend**: Rust, gRPC, Tonic, Postgres, Diesel, Anchor Client
+- **Backend**: Rust, Actix Web, Postgres, Diesel, Anchor Client
 - **Frontend**: React, TypeScript, Ant Design, FingerprintJS, @solana/web3.js
 - **TypeScript SDK**:
   - Encryption utilities (used by Program tests & Frontend)
@@ -64,6 +64,8 @@ Privy is a Solana Devnet SOL application for receiving spam-free private message
   - Server API call functions (used by Server tests & Frontend)
 
 ## Technical Overview
+
+![](./docs/privy-landing.png)
 
 ### Technical User Flow
 

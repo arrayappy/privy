@@ -1,4 +1,3 @@
-
 <div align="center">
   <h1>Privy: Solana Program</h1>
   <a href="#overview">Overview</a>
@@ -6,16 +5,26 @@
   <a href="#repo-structure">Repo Structure</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="#development">Development</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="#deployment">Deployment</a>
   <br />
   <hr />
 </div>
 
 ## Overview
+Frontend application for the Privy protocol, providing a user interface for interacting with the Solana program.
 
 ## Repo Structure
 
 ## Development
+```bash
+# Requirements
+node 18
+yarn
 
-## Deployment
+# 1. Install dependencies
+yarn install
+
+# 2. Link SDK package
+yarn link @privy/sdk
+
+# 3. Start development server
+yarn dev
