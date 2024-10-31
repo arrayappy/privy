@@ -65,7 +65,7 @@ Privy is a Solana application for receiving spam-free private messages through a
 
 ## Technical Overview
 
-![](./docs/privy-landing.png)
+![](./docs/privy-flow.png)
 
 ### Technical User Flow
 
