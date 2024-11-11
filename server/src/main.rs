@@ -283,8 +283,12 @@ async fn status() -> impl Responder {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    
+    // Disable Diesel prepared statement caching
+    std::env::set_var("NO_DIESEL_PREPARED_STATEMENTS", "true");
+
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = format!("127.0.0.1:{}", port);
 
     println!("Running on port {}...", port);
 
