@@ -24,6 +24,8 @@ use solana::client::{get_user_pda_account, insert_message_to_pda};
 mod encryption;
 use encryption::service::decompress_and_decrypt;
 
+use actix_web::web::Query;
+
 #[derive(Deserialize, Debug)]
 pub struct Category {
     pub cat_name: String,
@@ -85,7 +87,7 @@ struct CheckUsernameExistReq {
 }
 
 // Handler functions
-async fn get_user(req: web::Json<GetUserReq>) -> impl Responder {
+async fn get_user(req: Query<GetUserReq>) -> impl Responder {
     let mut connection = establish_connection();
 
     let user_row = match get_user_row_by_name(&mut connection, &req.user_name) {
@@ -140,7 +142,7 @@ async fn get_user(req: web::Json<GetUserReq>) -> impl Responder {
     })
 }
 
-async fn get_db_user(req: web::Json<GetDbUserReq>) -> impl Responder {
+async fn get_db_user(req: Query<GetDbUserReq>) -> impl Responder {
     let mut connection = establish_connection();
     
     match get_user_row_by_addr(&mut connection, &req.user_addr) {
@@ -282,7 +284,7 @@ async fn status() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = format!("127.0.0.1:{}", port);
 
     println!("Running on port {}...", port);
 
