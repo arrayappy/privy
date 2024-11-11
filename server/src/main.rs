@@ -46,6 +46,12 @@ struct GetUserRes {
     passkey_enabled: bool,
 }
 
+
+#[derive(Deserialize, Debug)]
+struct GetDbUserReq {
+    user_addr: String,
+}
+
 #[derive(Deserialize, Debug)]
 struct InsertMessageReq {
     user_addr: String,
@@ -132,6 +138,15 @@ async fn get_user(req: web::Json<GetUserReq>) -> impl Responder {
         user_addr: user_row.user_addr,
         passkey_enabled: !category.passkey.is_empty(),
     })
+}
+
+async fn get_db_user(req: web::Json<GetDbUserReq>) -> impl Responder {
+    let mut connection = establish_connection();
+    
+    match get_user_row_by_addr(&mut connection, &req.user_addr) {
+        Some(user) => HttpResponse::Ok().json(user),
+        None => HttpResponse::NotFound().body("User not found"),
+    }
 }
 
 async fn insert_message(req: web::Json<InsertMessageReq>) -> impl Responder {
@@ -280,7 +295,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .route("/status", web::get().to(status))  // Add the status endpoint
-            .route("/get_user", web::post().to(get_user))
+            .route("/get_user", web::get().to(get_user))
+            .route("/get_db_user", web::get().to(get_db_user))
             .route("/insert_message", web::post().to(insert_message))
             .route("/create_user", web::post().to(create_user))
             .route("/update_user", web::post().to(update_user))
