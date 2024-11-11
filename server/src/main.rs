@@ -284,7 +284,7 @@ async fn status() -> impl Responder {
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("0.0.0.0:{}", port);
 
     println!("Running on port {}...", port);
 
