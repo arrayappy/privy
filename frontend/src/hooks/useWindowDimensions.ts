@@ -1,18 +1,22 @@
+import { useState, useEffect } from 'react';
 import useDimensions from "src/hooks/useDimensions";
 
-// Returns dimensions of the viewport which includes things like
-// scrollbar width
 function getWindowDimensions() {
-  const { innerWidth: width, innerHeight: height } = window;
+  // Check if window is defined (client-side)
+  if (typeof window !== 'undefined') {
+    const { innerWidth: width, innerHeight: height } = window;
+    return {
+      height,
+      width,
+    };
+  }
+  // Return default values for server-side rendering
   return {
-    height,
-    width,
+    height: 0,
+    width: 0,
   };
 }
 
-export default function useWindowDimensions(): {
-  height: number;
-  width: number;
-} {
+export default function useWindowDimensions() {
   return useDimensions(getWindowDimensions);
 }

@@ -13,12 +13,21 @@ const BreakpointList = Object.entries(Breakpoints) as Array<
 >;
 
 function getBreakpointsFromWindowWidth(): BreakpointConfig {
-  return BreakpointList.reduce((result, [breakpoint, size]) => {
-    const { matches } = window.matchMedia(`(max-width: ${size}px)`);
+  if (typeof window !== 'undefined') {
+    return BreakpointList.reduce((result, [breakpoint, size]) => {
+      const { matches } = window.matchMedia(`(max-width: ${size}px)`);
+      const key: BreakpointConfigKey = `is${breakpoint}Breakpoint`;
+      return {
+        ...result,
+        [key]: matches,
+      };
+    }, {} as BreakpointConfig);
+  }
+  return BreakpointList.reduce((result, [breakpoint]) => {
     const key: BreakpointConfigKey = `is${breakpoint}Breakpoint`;
     return {
       ...result,
-      [key]: matches,
+      [key]: false,
     };
   }, {} as BreakpointConfig);
 }
