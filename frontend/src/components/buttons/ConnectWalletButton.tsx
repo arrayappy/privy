@@ -17,8 +17,9 @@ function PopoverContent() {
       <TextButton
         buttonTheme={TextButtonTheme.Navy}
         fontClass={FontClass.Header2}
-        onClick={disconnect}
+        href="/profile"
         textTransform="uppercase"
+        type="link_internal"
       >
         Profile
       </TextButton>

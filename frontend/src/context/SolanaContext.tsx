@@ -1,12 +1,10 @@
-import { Connection } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { Context, createContext, useMemo } from "react";
 import {
   useWallet,
   WalletProvider as WalletProviderImport,
 } from "@solana/wallet-adapter-react";
 import {
-  BackpackWalletAdapter,
-  GlowWalletAdapter,
   PhantomWalletAdapter,
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
@@ -68,9 +66,9 @@ export default function SolanaContextProvider({ children }: Props) {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
-      new GlowWalletAdapter(),
+      // new GlowWalletAdapter(),
       new SolflareWalletAdapter(),
-      new BackpackWalletAdapter(),
+      // new BackpackWalletAdapter(),
     ],
     []
   );
@@ -83,3 +81,5 @@ export default function SolanaContextProvider({ children }: Props) {
     </WalletProviderImport>
   );
 }
+
+export { default as SolanaContextProvider } from "./SolanaContext";

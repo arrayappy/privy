@@ -29,8 +29,8 @@ function LeftButtons() {
       </ExternalLink>
       <TextButton
         fontClass={FontClass.Header2}
-        href="/messages"
-        textDecoration={asPath === "/messages" ? "underline" : undefined}
+        href="/fruits"
+        textDecoration={asPath === "/fruits" ? "underline" : undefined}
         textTransform="uppercase"
         type="link_internal"
       >

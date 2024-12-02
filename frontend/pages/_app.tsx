@@ -25,7 +25,6 @@ import "@/css/global/Wallet.css";
 import { PlayFlipGameContextProvider } from "src/context/PlayFlipGameContext";
 
 const queryClient = new QueryClient();
-
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <>
