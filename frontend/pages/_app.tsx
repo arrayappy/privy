@@ -22,7 +22,6 @@ import SolanaContextProvider from "src/context/SolanaContext";
 
 // Necessary to put down here so that these styles take precedence
 import "@/css/global/Wallet.css";
-import { PlayFlipGameContextProvider } from "src/context/PlayFlipGameContext";
 
 const queryClient = new QueryClient();
 function MyApp({ Component, pageProps }: AppProps) {
@@ -34,9 +33,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       </Head>
       <QueryClientProvider client={queryClient}>
         <SolanaContextProvider>
-          <PlayFlipGameContextProvider>
             <Component {...pageProps} />
-          </PlayFlipGameContextProvider>
         </SolanaContextProvider>
       </QueryClientProvider>
     </>
