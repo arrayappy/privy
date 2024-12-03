@@ -19,7 +19,6 @@ import {
   withdrawBalanceIx
 } from "./instructions";
 import { getPrivyConfigPda, getPrivyUserPda } from "./pdas";
-import { decompAsymDec, decompSymDec } from "../utils/helpers";
 
 type AnchorWallet = {
   publicKey: PublicKey;
@@ -120,13 +119,6 @@ export default class PrivySdk {
   async updateCategoryTx(privyUser: PublicKey, encryptedCategories: string): Promise<Transaction> {
     const ix = await updateCategoryIx(this.program, { privyUser }, { encryptedCategories });
     return ixToTx(ix);
-  }
-
-  async readPrivyUser(privyUser: PublicKey, args: { extendedKey: Buffer, iv: Buffer, privateKeyPem: string }) {
-    const accountData = await this.program.account.privyUser.fetch(privyUser);
-    accountData.messages =  accountData.messages.map((encryptedMsg) => decompAsymDec(encryptedMsg, args.privateKeyPem));
-    accountData.categories = JSON.parse(decompSymDec(accountData.categories, args.extendedKey, args.iv));
-    return accountData;
   }
 
   async getPrivyConfigPda() {

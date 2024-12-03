@@ -1,6 +1,5 @@
 export * from "./idl";
 export * from "./instructions";
-export * from "./utils"
+export * from "./utils";
 
-import PrivySdk from "./PrivySdk";
-export default PrivySdk;
+export { default as PrivySdk } from "./PrivySdk";
