@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import Header from "src/components/header/Header";
 import ResponsiveContainer from "src/components/ResponsiveContainer";
 import styles from "@/css/header/HeaderDesktop.module.css";
-import Profile from "src/components/pages/profile/Profile";
+import UpdateUserForm from "src/components/pages/profile/UpdateUserForm";
 
 const ProfilePage: NextPage = () => {
   return (
@@ -10,7 +10,7 @@ const ProfilePage: NextPage = () => {
       <Header />
       <ResponsiveContainer>
         <div className={styles.container}>
-          <Profile />
+          <UpdateUserForm />
         </div>
       </ResponsiveContainer>
     </>
