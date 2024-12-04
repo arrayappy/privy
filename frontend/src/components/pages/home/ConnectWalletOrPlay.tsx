@@ -11,11 +11,13 @@ import useBreakpoint from "src/hooks/useBreakpoint";
 import useSolanaContext from "src/hooks/useSolanaContext";
 import CreateUserForm from "./CreateUserForm";
 import BuyTokensCard from "./BuyTokensCard";
+import { getDbUser } from "../../../services/api";
 
 export default function ConnectWalletOrPlay() {
   const { publicKey } = useWallet();
   const { isMobileBreakpoint } = useBreakpoint();
-  const { privyClient } = useSolanaContext();
+  const { privyClient, setPrivyUser, setDbUser } =
+    useSolanaContext();
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,17 +25,27 @@ export default function ConnectWalletOrPlay() {
     async function checkUser() {
       if (!publicKey || !privyClient) {
         setIsLoading(false);
+        setUserExists(null);
+        setPrivyUser(null);
         return;
       }
 
       try {
-        const [privyUserPDA] = await PublicKey.findProgramAddressSync(
-          [Buffer.from("privy-user"), publicKey.toBuffer()],
-          privyClient.program.programId
-        );
-        const accountInfo = await privyClient.program.provider.connection.getAccountInfo(privyUserPDA);
-        console.log("accountInfo", accountInfo?.data.toString());
-        setUserExists(accountInfo !== null);
+        const privyUserPDA = await privyClient.getPrivyUserPda(publicKey);
+        const privyUserAccount =
+          await privyClient.program.account.privyUser.fetch(privyUserPDA);
+        setPrivyUser((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(privyUserAccount)) {
+            return prev;
+          }
+          return privyUserAccount;
+        });
+        setUserExists(!!privyUserAccount);
+        setIsLoading(false);
+
+        const dbUser = await getDbUser(publicKey.toBase58());
+        setDbUser(dbUser);
+
       } catch (error) {
         console.error("Error checking user:", error);
         setUserExists(false);

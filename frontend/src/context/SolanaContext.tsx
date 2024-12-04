@@ -1,5 +1,5 @@
 import { Connection, PublicKey } from "@solana/web3.js";
-import { Context, createContext, useMemo } from "react";
+import { Context, createContext, useMemo, useState } from "react";
 import {
   useWallet,
   WalletProvider as WalletProviderImport,
@@ -9,26 +9,57 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import PrivyClient from "src/services/solana/PrivyClient";
+// import PrivySdk from "src/services/solana/PrivyClient";
 import { Maybe } from "src/types/UtilityTypes";
+// import PrivyClient from "src/services/solana/PrivyClient";
+import { PrivySdk } from "@privy/sdk/program";
 
 // Default styles that can be overridden by your app
 require("@solana/wallet-adapter-react-ui/styles.css");
 
-// const getRpcUrl = () => "http://127.0.0.1:8899";
-
 const connection = new Connection("https://api.devnet.solana.com", {
   commitment: "confirmed",
 });
+type PrivyUser = {username: string; tokenLimit: number; categories: ({ catName: string; passkey: string; enabled: boolean; singleMsg: boolean; } | null)[]; messages: string[]; bump: number; }
+
+type Category = {
+  catName: string;
+  passkey: string;
+  enabled: boolean;
+  singleMsg: boolean;
+};
+
+
+type DbUser = {
+  user_addr: string;
+  user_name: string;
+  password_salt: string;
+  password_pubkey: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type SolanaContextData = {
   connection: Connection;
-  privyClient: Maybe<PrivyClient>;
+  privyClient: Maybe<PrivySdk>;
+  privyUser: Maybe<PrivyUser>;
+  setPrivyUser: (user: Maybe<PrivyUser>) => void;
+  dbUser: Maybe<DbUser>;
+  setDbUser: (user: Maybe<DbUser>) => void;
+  decryptedCategories: Maybe<Category[]>;
+  setDecryptedCategories: (categories: Maybe<Category[]>) => void;
 };
 
 export const SolanaContext: Context<SolanaContextData> =
   createContext<SolanaContextData>({
     connection,
     privyClient: null,
+    privyUser: null,
+    setPrivyUser: () => {},
+    dbUser: null,
+    setDbUser: () => {},
+    decryptedCategories: null,
+    setDecryptedCategories: () => {},
   });
 
 type Props = {
@@ -37,15 +68,16 @@ type Props = {
 
 function Inner({ children }: Props) {
   const wallet = useWallet();
-  console.log(wallet.publicKey);
+  const [privyUser, setPrivyUser] = useState<Maybe<PrivyUser>>(null);
+  const [decryptedCategories, setDecryptedCategories] = useState<Maybe<Category[]>>(null);
+  const [dbUser, setDbUser] = useState<Maybe<DbUser>>(null);
   return (
     <SolanaContext.Provider
-      // eslint-disable-next-line react/jsx-no-constructed-context-values
       value={{
         connection,
         privyClient:
           wallet && wallet.publicKey
-            ? new PrivyClient({
+            ? new PrivySdk({
                 authority: wallet.publicKey,
                 connection,
                 wallet: {
@@ -55,6 +87,12 @@ function Inner({ children }: Props) {
                 },
               })
             : null,
+        privyUser,
+        setPrivyUser,
+        decryptedCategories,
+        setDecryptedCategories,
+        dbUser,
+        setDbUser,
       }}
     >
       {children}
@@ -65,10 +103,8 @@ function Inner({ children }: Props) {
 export default function SolanaContextProvider({ children }: Props) {
   const wallets = useMemo(
     () => [
-      new PhantomWalletAdapter(),
-      // new GlowWalletAdapter(),
-      new SolflareWalletAdapter(),
-      // new BackpackWalletAdapter(),
+      new PhantomWalletAdapter({ autoConnect: true }),
+      new SolflareWalletAdapter({ autoConnect: true }),
     ],
     []
   );

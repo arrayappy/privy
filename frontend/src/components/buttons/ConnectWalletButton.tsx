@@ -8,6 +8,7 @@ import { Popover } from "antd";
 import TextButton from "src/components/buttons/TextButton";
 import TextButtonTheme from "src/types/enums/TextButtonTheme";
 import styles from "@/css/buttons/ConnectWalletButton.module.css";
+import useSolanaContext from "src/hooks/useSolanaContext";
 
 function PopoverContent() {
   const { disconnect } = useWallet();
@@ -22,6 +23,15 @@ function PopoverContent() {
         type="link_internal"
       >
         Profile
+      </TextButton>
+      <TextButton
+        buttonTheme={TextButtonTheme.Navy}
+        fontClass={FontClass.Header2}
+        href="/categories"
+        textTransform="uppercase"
+        type="link_internal"
+      >
+        Category Settings
       </TextButton>
       <TextButton
         buttonTheme={TextButtonTheme.Navy}
@@ -50,6 +60,7 @@ export default function ConnectWalletButton({
 }: Props) {
   const { setVisible } = useWalletModal();
   const { publicKey } = useWallet();
+  const { privyUser } = useSolanaContext();
 
   if (publicKey == null) {
     return (
@@ -79,7 +90,8 @@ export default function ConnectWalletButton({
         style={width != null ? { width } : undefined}
         width={width != null ? "100%" : undefined}
       >
-        {shortenAddress(publicKey.toString())}
+        {/*  */}
+        {`${shortenAddress(publicKey.toString())} ${privyUser?.tokenLimit ? `[${privyUser.tokenLimit}🍊]` : ""}`}
       </ButtonWithText>
     </Popover>
   );

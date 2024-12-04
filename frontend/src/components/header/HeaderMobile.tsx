@@ -48,6 +48,21 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
           </TextButton>
           <TextButton
             fontClass={FontClass.Header2}
+            // onClick={() => {
+            //   onHidePopover();
+            //   // Timeout makes the popover hiding UX smoother. If we don't do it,
+            //   // the button will change from "disconnect" to "connect" as the popover is
+            //   // fading out.
+            //   setTimeout(() => disconnect(), 300);
+            // }}
+            href="/profile"
+            textTransform="uppercase"
+            type="link_internal"
+          >
+            Category Settings
+          </TextButton>
+          <TextButton
+            fontClass={FontClass.Header2}
             onClick={() => {
               onHidePopover();
               // Timeout makes the popover hiding UX smoother. If we don't do it,

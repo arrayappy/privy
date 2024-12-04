@@ -5,40 +5,42 @@ import Header2 from "src/components/text/Header2";
 import ButtonWithText from "src/components/buttons/ButtonWithText";
 import FontClass from "src/types/enums/FontClass";
 import ButtonTheme from "src/types/enums/ButtonTheme";
-import formatDecimals from "src/utils/number/formatDecimals";
 import { BN } from "@coral-xyz/anchor";
 import useBreakpoint from "src/hooks/useBreakpoint";
 import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import useSolanaContext from "src/hooks/useSolanaContext";
 import PlayFlipGameGeneric from "src/components/pages/home/PlayFlipGameGeneric";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const TOKENS_PER_SOL = 100;
 
-function AmountButton({ amountInSol, onSelect, isSelected }: { 
+function AmountButton({
+  amountInSol,
+  onSelect,
+  isSelected,
+}: {
   amountInSol: number;
   onSelect: (amount: number) => void;
   isSelected: boolean;
 }) {
   return (
     <ButtonWithText
-      buttonTheme={
-        isSelected
-          ? ButtonTheme.WinterGreen
-          : ButtonTheme.Beige
-      }
+      buttonTheme={isSelected ? ButtonTheme.WinterGreen : ButtonTheme.Beige}
       className={styles.chooseAmountButton}
       fontClass={FontClass.Header2}
       onClick={() => onSelect(amountInSol)}
       width="100%"
     >
-      {formatDecimals(amountInSol, 1)} SOL
+      {`${amountInSol} SOL`}
     </ButtonWithText>
   );
 }
 
-function ChooseAmount({ onSelect, selectedAmount }: {
+function ChooseAmount({
+  onSelect,
+  selectedAmount,
+}: {
   onSelect: (amount: number) => void;
   selectedAmount: number | null;
 }) {
@@ -55,7 +57,7 @@ function ChooseAmount({ onSelect, selectedAmount }: {
       </Header2>
       <div className={styles.chooseAmountButtons}>
         {amounts.map((amount) => (
-          <AmountButton 
+          <AmountButton
             key={amount}
             amountInSol={amount}
             onSelect={onSelect}
@@ -70,30 +72,50 @@ function ChooseAmount({ onSelect, selectedAmount }: {
 export default function BuyTokensCard() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const wallet = useWallet();
-  const { connection, privyClient } = useSolanaContext();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const { publicKey, sendTransaction } = useWallet();
+  const { connection, privyClient, setPrivyUser } = useSolanaContext();
   const { isTabletBreakpoint } = useBreakpoint();
 
   const handleBuyTokens = async () => {
-    if (!selectedAmount || !privyClient || !wallet.publicKey) return;
+    if (!selectedAmount || !privyClient || !publicKey) return;
 
     setIsLoading(true);
     try {
       const lamports = new BN(selectedAmount * LAMPORTS_PER_SOL);
-      const privyUserPDA = await privyClient.getPrivyUserPda(wallet.publicKey);
-      
+      const privyUserPDA = await privyClient.getPrivyUserPda(publicKey);
+
       const tx = await privyClient.addTokensTx(
-        wallet.publicKey,
+        publicKey!,
         privyUserPDA,
         lamports
       );
 
-      const signature = await wallet.sendTransaction(tx, connection!);
+      const signature = await sendTransaction(tx, connection!);
       await connection!.confirmTransaction(signature, "confirmed");
+
+      // Show success message
+      setShowSuccess(true);
+      setSelectedAmount(null);
+      setTimeout(() => {
+        setShowSuccess(false);
+        queryPrivyAccount(); // Query privy account again
+      }, 1000);
     } catch (error) {
       console.error("Failed to buy tokens:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const queryPrivyAccount = async () => {
+    if (!publicKey || !privyClient) return;
+    try {
+      const privyUserPDA = await privyClient.getPrivyUserPda(publicKey);
+      const privyUserAccount = await privyClient.program.account.privyUser.fetch(privyUserPDA);
+      setPrivyUser(privyUserAccount);
+    } catch (error) {
+      console.error("Failed to fetch privy user account:", error);
     }
   };
 
@@ -108,7 +130,10 @@ export default function BuyTokensCard() {
       >
         100 Privy Tokens Per 1 Devnet Sol
       </Header1>
-      <ChooseAmount onSelect={setSelectedAmount} selectedAmount={selectedAmount} />
+      <ChooseAmount
+        onSelect={setSelectedAmount}
+        selectedAmount={selectedAmount}
+      />
       <ButtonWithText
         buttonTheme={ButtonTheme.Yellow}
         disabled={selectedAmount == null || isLoading}
@@ -119,6 +144,11 @@ export default function BuyTokensCard() {
       >
         {isLoading ? "Processing..." : `Buy ${tokenAmount} Tokens`}
       </ButtonWithText>
+      {showSuccess && (
+        <Header2 className={styles.successMessage}>
+          Successfully bought tokens!
+        </Header2>
+      )}
     </PlayFlipGameGeneric>
   );
 }
