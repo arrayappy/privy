@@ -16,7 +16,7 @@ import { getDbUser } from "../../../services/api";
 export default function ConnectWalletOrPlay() {
   const { publicKey } = useWallet();
   const { isMobileBreakpoint } = useBreakpoint();
-  const { privyClient, setPrivyUser, setDbUser } =
+  const { privyClient, setPrivyUser, setDbUser, setDecryptedCategories } =
     useSolanaContext();
   const [userExists, setUserExists] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +27,7 @@ export default function ConnectWalletOrPlay() {
         setIsLoading(false);
         setUserExists(null);
         setPrivyUser(null);
+        setDecryptedCategories([]);
         return;
       }
 
@@ -46,16 +47,53 @@ export default function ConnectWalletOrPlay() {
         const dbUser = await getDbUser(publicKey.toBase58());
         setDbUser(dbUser);
 
+        if (dbUser && privyUserAccount.categories) {
+          try {
+            const response = await fetch("/api/getDecryptedCategories", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                key: dbUser.password_salt,
+                categories: privyUserAccount.categories,
+              }),
+            });
+
+            const data = await response.json();
+            let decryptedCategories;
+            try {
+              decryptedCategories =
+                typeof data.decryptedCategories === "string"
+                  ? JSON.parse(data.decryptedCategories)
+                  : data.decryptedCategories;
+
+              const categoriesArray = Array.isArray(decryptedCategories)
+                ? decryptedCategories.map((cat) => ({
+                    cat_name: cat.cat_name || "",
+                    passkey: cat.passkey || "",
+                    enabled: Boolean(cat.enabled),
+                    single_msg: Boolean(cat.single_msg),
+                  }))
+                : [];
+
+              setDecryptedCategories(categoriesArray);
+            } catch (e) {
+              console.error("Error parsing categories:", e);
+              setDecryptedCategories([]);
+            }
+          } catch (error) {
+            console.error("Error fetching categories:", error);
+            setDecryptedCategories([]);
+          }
+        }
       } catch (error) {
         console.error("Error checking user:", error);
         setUserExists(false);
-      } finally {
-        setIsLoading(false);
+        setDecryptedCategories([]);
       }
     }
 
     checkUser();
-  }, [publicKey, privyClient]);
+  }, [publicKey]);
 
   if (publicKey == null) {
     return (

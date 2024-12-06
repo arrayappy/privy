@@ -20,15 +20,20 @@ require("@solana/wallet-adapter-react-ui/styles.css");
 const connection = new Connection("https://api.devnet.solana.com", {
   commitment: "confirmed",
 });
-type PrivyUser = {username: string; tokenLimit: number; categories: ({ catName: string; passkey: string; enabled: boolean; singleMsg: boolean; } | null)[]; messages: string[]; bump: number; }
-
-type Category = {
-  catName: string;
-  passkey: string;
-  enabled: boolean;
-  singleMsg: boolean;
+type PrivyUser = {
+  username: string;
+  tokenLimit: number;
+  categories: string;
+  messages: string[];
+  bump: number;
 };
 
+type Category = {
+  cat_name: string;
+  passkey: string;
+  enabled: boolean;
+  single_msg: boolean;
+};
 
 type DbUser = {
   user_addr: string;
@@ -37,7 +42,7 @@ type DbUser = {
   password_pubkey: string;
   created_at: string;
   updated_at: string;
-}
+};
 
 export type SolanaContextData = {
   connection: Connection;
@@ -69,7 +74,8 @@ type Props = {
 function Inner({ children }: Props) {
   const wallet = useWallet();
   const [privyUser, setPrivyUser] = useState<Maybe<PrivyUser>>(null);
-  const [decryptedCategories, setDecryptedCategories] = useState<Maybe<Category[]>>(null);
+  const [decryptedCategories, setDecryptedCategories] =
+    useState<Maybe<Category[]>>(null);
   const [dbUser, setDbUser] = useState<Maybe<DbUser>>(null);
   return (
     <SolanaContext.Provider

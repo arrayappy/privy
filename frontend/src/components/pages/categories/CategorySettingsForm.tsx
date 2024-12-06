@@ -32,64 +32,20 @@ export default function CategorySettingsForm() {
   const { isTabletBreakpoint } = useBreakpoint();
   const [loading, setLoading] = useState(false);
   const { publicKey, sendTransaction } = useWallet();
-  const { connection, privyClient } = useSolanaContext();
-  const { dbUser, privyUser } = useSolanaContext();
+  const { connection, privyClient, dbUser, privyUser, decryptedCategories } =
+    useSolanaContext();
+
+  // Initialize with empty array instead of undefined
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const getDecryptedCategories = async () => {
-    setLoading(true);
-    try {
-      const response2 = await fetch("/api/getDecryptedCategories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: dbUser?.password_salt,
-          categories: privyUser?.categories,
-        }),
-      });
-
-      const data = await response2.json();
-      let decryptedCategories;
-      try {
-        decryptedCategories =
-          typeof data.decryptedCategories === "string"
-            ? JSON.parse(data.decryptedCategories)
-            : data.decryptedCategories;
-      } catch (e) {
-        console.error("Error parsing categories:", e);
-        return;
-      }
-
-      if (!decryptedCategories) {
-        console.error("No decryptedCategories in response");
-        return;
-      }
-
-      const categoriesArray = Array.isArray(decryptedCategories)
-        ? decryptedCategories.map((cat) => ({
-            cat_name: cat.cat_name || "",
-            passkey: cat.passkey || "",
-            enabled: Boolean(cat.enabled),
-            single_msg: Boolean(cat.single_msg),
-          }))
-        : [];
-
-      if (categoriesArray.length > 0) {
-        setCategories(categoriesArray);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Update local state when decryptedCategories changes
   useEffect(() => {
-    if (privyUser && dbUser && categories.length === 0) {
-      getDecryptedCategories();
+    if (decryptedCategories) {
+      setCategories(decryptedCategories);
+    } else {
+      setCategories([]); // Set empty array if no categories
     }
-  }, [privyUser, dbUser]);
+  }, [privyUser]);
 
   const handleUpdate = async () => {
     setLoading(true);
@@ -102,7 +58,10 @@ export default function CategorySettingsForm() {
         body: JSON.stringify({ categories, key: dbUser?.password_salt }),
       });
       const { encryptedCategories } = await response1.json();
-      const tx = await privyClient.updateCategoryTx(publicKey!, encryptedCategories); 
+      const tx = await privyClient.updateCategoryTx(
+        publicKey!,
+        encryptedCategories
+      );
       const signature = await sendTransaction(tx, connection!);
       await connection!.confirmTransaction(signature, "confirmed");
 
