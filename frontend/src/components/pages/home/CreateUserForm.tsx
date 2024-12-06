@@ -51,17 +51,17 @@ export default function CreateUserForm({ onSuccess }: CreateUserFormProps) {
         enabled: true,
         single_msg: false,
       }];
-      const response2 = await fetch("/api/getCompressedCategories", {
+      const response2 = await fetch("/api/getEncryptedCategories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: password_salt, categories }),
       });
-      const { compressedEncryptedCategories } = await response2.json();
-      console.log('encryptedCategories', compressedEncryptedCategories);
+      const { encryptedCategories } = await response2.json();
+      console.log('encryptedCategories', encryptedCategories);
       const tx = await privyClient.createUserTx(
         publicKey,
         values.username,
-        compressedEncryptedCategories,
+        encryptedCategories,
         new BN(0),
       );
       const signature = await sendTransaction(tx, connection!);
