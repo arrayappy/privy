@@ -45,7 +45,7 @@ export default function CategorySettingsForm() {
     } else {
       setCategories([]); // Set empty array if no categories
     }
-  }, [privyUser]);
+  }, [privyUser, decryptedCategories]);
 
   const handleUpdate = async () => {
     setLoading(true);

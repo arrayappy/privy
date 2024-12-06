@@ -13,6 +13,7 @@ import { Divider, List, Typography, Collapse, Modal, Input, Form } from "antd";
 import ButtonWithText from "src/components/buttons/ButtonWithText";
 import ButtonTheme from "src/types/enums/ButtonTheme";
 import useSolanaContext from "../../src/hooks/useSolanaContext";
+import withInitialData from "src/components/hoc/withInitialData";
 
 const { Panel } = Collapse;
 
@@ -113,7 +114,7 @@ const parseDecryptedMessages = (messages: string) => {
   return groupedMessages;
 };
 
-const Info: NextPage = ({
+const FruitsPage: NextPage = ({
   children,
   fadeIn = false,
   rowGap,
@@ -247,4 +248,4 @@ const Info: NextPage = ({
   );
 };
 
-export default Info;
+export default withInitialData(FruitsPage);
