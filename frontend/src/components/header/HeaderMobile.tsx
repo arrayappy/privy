@@ -19,7 +19,7 @@ import { useState } from "react";
 import TwitterIcon from "src/components/icons/TwitterIcon";
 
 function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
-  const { asPath } = useRouter();
+  const { asPath, push } = useRouter();
   const { disconnect, publicKey } = useWallet();
 
   return (
@@ -33,13 +33,6 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
         <>
           <TextButton
             fontClass={FontClass.Header2}
-            // onClick={() => {
-            //   onHidePopover();
-            //   // Timeout makes the popover hiding UX smoother. If we don't do it,
-            //   // the button will change from "disconnect" to "connect" as the popover is
-            //   // fading out.
-            //   setTimeout(() => disconnect(), 300);
-            // }}
             href="/profile"
             textTransform="uppercase"
             type="link_internal"
@@ -48,13 +41,6 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
           </TextButton>
           <TextButton
             fontClass={FontClass.Header2}
-            // onClick={() => {
-            //   onHidePopover();
-            //   // Timeout makes the popover hiding UX smoother. If we don't do it,
-            //   // the button will change from "disconnect" to "connect" as the popover is
-            //   // fading out.
-            //   setTimeout(() => disconnect(), 300);
-            // }}
             href="/profile"
             textTransform="uppercase"
             type="link_internal"
@@ -65,10 +51,10 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
             fontClass={FontClass.Header2}
             onClick={() => {
               onHidePopover();
-              // Timeout makes the popover hiding UX smoother. If we don't do it,
-              // the button will change from "disconnect" to "connect" as the popover is
-              // fading out.
-              setTimeout(() => disconnect(), 300);
+              setTimeout(() => {
+                disconnect();
+                push('/');
+              }, 300);
             }}
             textTransform="uppercase"
           >

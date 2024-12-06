@@ -9,9 +9,11 @@ import TextButton from "src/components/buttons/TextButton";
 import TextButtonTheme from "src/types/enums/TextButtonTheme";
 import styles from "@/css/buttons/ConnectWalletButton.module.css";
 import useSolanaContext from "src/hooks/useSolanaContext";
+import { useRouter } from "next/router";
 
 function PopoverContent() {
   const { disconnect } = useWallet();
+  const { push } = useRouter();
 
   return (
     <div className={styles.popover}>
@@ -36,7 +38,10 @@ function PopoverContent() {
       <TextButton
         buttonTheme={TextButtonTheme.Navy}
         fontClass={FontClass.Header2}
-        onClick={disconnect}
+        onClick={() => {
+          disconnect();
+          push('/');
+        }}
         textTransform="uppercase"
       >
         Disconnect wallet
