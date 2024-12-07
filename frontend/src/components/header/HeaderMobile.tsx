@@ -45,7 +45,7 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
             textTransform="uppercase"
             type="link_internal"
           >
-            Category Settings
+            Crate Settings
           </TextButton>
           <TextButton
             fontClass={FontClass.Header2}
@@ -53,7 +53,7 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
               onHidePopover();
               setTimeout(() => {
                 disconnect();
-                push('/');
+                push("/");
               }, 300);
             }}
             textTransform="uppercase"

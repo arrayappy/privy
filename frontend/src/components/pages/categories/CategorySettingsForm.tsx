@@ -192,7 +192,7 @@ export default function CategorySettingsForm() {
         textAlign="center"
         textTransform="uppercase"
       >
-        Category Settings
+        Crate Settings
       </Header1>
 
       <div

@@ -29,18 +29,18 @@ function PopoverContent() {
       <TextButton
         buttonTheme={TextButtonTheme.Navy}
         fontClass={FontClass.Header2}
-        href="/categories"
+        href="/crates"
         textTransform="uppercase"
         type="link_internal"
       >
-        Category Settings
+        Crate Settings
       </TextButton>
       <TextButton
         buttonTheme={TextButtonTheme.Navy}
         fontClass={FontClass.Header2}
         onClick={() => {
           disconnect();
-          push('/');
+          push("/");
         }}
         textTransform="uppercase"
       >
@@ -96,7 +96,9 @@ export default function ConnectWalletButton({
         width={width != null ? "100%" : undefined}
       >
         {/*  */}
-        {`${shortenAddress(publicKey.toString())} ${privyUser?.tokenLimit ? `[${privyUser.tokenLimit}🍊]` : ""}`}
+        {`${shortenAddress(publicKey.toString())} ${
+          privyUser?.tokenLimit ? `[${privyUser.tokenLimit}🍊]` : ""
+        }`}
       </ButtonWithText>
     </Popover>
   );
