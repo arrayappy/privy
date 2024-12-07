@@ -18,7 +18,7 @@ pub fn insert_message_to_pda(
     let payer = Keypair::from_bytes(&keypair_bytes)?;
 
     let client = Client::new_with_options(
-        Cluster::Localnet,
+        Cluster::Devnet,
         Rc::new(&payer),
         CommitmentConfig::processed(),
     );
@@ -65,7 +65,7 @@ pub fn get_user_pda_account(
     let payer = Keypair::from_bytes(&keypair_bytes)?;
 
     let client = Client::new_with_options(
-        Cluster::Localnet,
+        Cluster::Devnet,
         Rc::new(&payer),
         CommitmentConfig::processed(),
     );
@@ -75,11 +75,12 @@ pub fn get_user_pda_account(
 
     let (privy_user_pda, _) =
         Pubkey::find_program_address(&[b"privy-user", &user_addr.to_bytes()], &program_id);
+    println!("privy_user_pda: {}", privy_user_pda);
 
 
     let privy_user_account: privy::state::PrivyUser = Runtime::new()?
         .block_on(async { program.account(privy_user_pda).await })?;
-
+    println!("privy_user_account: {:?}", privy_user_account);
 
     Ok(privy_user_account)
 }

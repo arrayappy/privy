@@ -15,7 +15,19 @@ use std::io::{Write, Read, Cursor};
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;
 
 fn extend_key(key: &str) -> Vec<u8> {
-    let mut extended_key = key.repeat(16 / key.len());
+    if key.is_empty() {
+        panic!("Key cannot be empty");
+    }
+    
+    let key_bytes = key.as_bytes();
+    if key_bytes.len() >= 16 {
+        // If key is longer than 16 bytes, truncate it
+        return key_bytes[0..16].to_vec();
+    }
+    
+    // If key is shorter than 16 bytes, repeat it
+    let repeat_count = (16 + key_bytes.len() - 1) / key_bytes.len();
+    let mut extended_key = key.repeat(repeat_count);
     extended_key.truncate(16);
     extended_key.into_bytes()
 }
@@ -40,9 +52,20 @@ fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> String {
 }
 
 fn decrypt(encoded_data: &str, key: &[u8], iv: &[u8]) -> Vec<u8> {
-    let cipher = Aes128Cbc::new_from_slices(key, iv).unwrap();
-    let decoded_data = decode(encoded_data).unwrap();
-    cipher.decrypt_vec(&decoded_data).unwrap()
+    println!("decrypting data: {} {:?} {:?}", encoded_data, key, iv);
+    if key.len() != 16 {
+        panic!("Invalid key length: {}. Expected 16 bytes", key.len());
+    }
+    if iv.len() != 16 {
+        panic!("Invalid IV length: {}. Expected 16 bytes", iv.len());
+    }
+    
+    let cipher = Aes128Cbc::new_from_slices(key, iv)
+        .expect("Failed to create cipher with provided key and IV");
+    let decoded_data = decode(encoded_data)
+        .expect("Failed to base64 decode encrypted data");
+    cipher.decrypt_vec(&decoded_data)
+        .expect("Failed to decrypt data")
 }
 
 pub fn compress_and_encrypt(data: &str, key: &str, iv: &[u8]) -> String {
