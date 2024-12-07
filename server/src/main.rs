@@ -45,6 +45,7 @@ struct GetUserReq {
 #[derive(Serialize)]
 struct GetUserRes {
     user_addr: String,
+    user_pubkey: Pubkey,
     passkey_enabled: bool,
 }
 
@@ -98,12 +99,12 @@ async fn get_user(req: Query<GetUserReq>) -> impl Responder {
     let fingerprint_categories = get_fingerprint_categories(&mut connection, &req.fingerprint_id)
         .unwrap_or((String::new(), Vec::new()));
 
-    let user_pub_key = match Pubkey::from_str(&user_row.user_addr) {
+    let user_pubkey = match Pubkey::from_str(&user_row.user_addr) {
         Ok(key) => key,
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
 
-    let user_pda = match thread::spawn(move || get_user_pda_account(&user_pub_key)).join() {
+    let user_pda = match thread::spawn(move || get_user_pda_account(&user_pubkey)).join() {
         Ok(Ok(pda)) => pda,
         _ => return HttpResponse::InternalServerError().body("User not found"),
     };
@@ -138,6 +139,7 @@ async fn get_user(req: Query<GetUserReq>) -> impl Responder {
 
     HttpResponse::Ok().json(GetUserRes {
         user_addr: user_row.user_addr,
+        user_pubkey,
         passkey_enabled: !category.passkey.is_empty(),
     })
 }
@@ -288,7 +290,7 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("NO_DIESEL_PREPARED_STATEMENTS", "true");
 
     let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-    let addr = format!("0.0.0.0:{}", port);
+    let addr = format!("127.0.0.1:{}", port);
 
     println!("Running on port {}...", port);
 
