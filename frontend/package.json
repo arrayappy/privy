@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
+    "@fingerprintjs/fingerprintjs": "^4.5.1",
     "@grpc/grpc-js": "^1.5.7",
     "@grpc/proto-loader": "^0.6.9",
     "@privy/sdk": "file:/Users/naidu/Documents/work/privy/sdk",
