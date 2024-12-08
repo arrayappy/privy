@@ -16,7 +16,7 @@
     "@fingerprintjs/fingerprintjs": "^4.5.1",
     "@grpc/grpc-js": "^1.5.7",
     "@grpc/proto-loader": "^0.6.9",
-    "@privy/sdk": "file:/Users/naidu/Documents/work/privy/sdk",
+    "@privy/sdk": "git+https://github.com/arrayappy/privy-sdk.git#main",
     "@react-hook/resize-observer": "^1.2.6",
     "@solana/wallet-adapter-base": "^0.9.18",
     "@solana/wallet-adapter-react": "^0.15.20",
