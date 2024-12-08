@@ -69,12 +69,43 @@ function ChooseAmount({
   );
 }
 
+function ShareableLink({ username }: { username: string }) {
+  const [copied, setCopied] = useState(false);
+  const link = `https://privy-devnet.vercel.app/${username}`;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  return (
+    <div className={styles.messageContainer}>
+      <Header2
+        colorClass={ColorClass.Navy}
+        textAlign="center"
+        textTransform="uppercase"
+      >
+        Share your Privy Link and receive the fruits.{" "}
+        <button onClick={handleCopy} className={styles.copyEmoji} title="Copy link">
+          LINK 📋
+        </button>
+      </Header2>
+    </div>
+  );
+}
+
 export default function BuyTokensCard() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { publicKey, sendTransaction } = useWallet();
-  const { connection, privyClient, setPrivyUser } = useSolanaContext();
+  const { connection, privyClient, setPrivyUser, privyUser } =
+    useSolanaContext();
   const { isTabletBreakpoint } = useBreakpoint();
 
   const handleBuyTokens = async () => {
@@ -112,7 +143,8 @@ export default function BuyTokensCard() {
     if (!publicKey || !privyClient) return;
     try {
       const privyUserPDA = await privyClient.getPrivyUserPda(publicKey);
-      const privyUserAccount = await privyClient.program.account.privyUser.fetch(privyUserPDA);
+      const privyUserAccount =
+        await privyClient.program.account.privyUser.fetch(privyUserPDA);
       setPrivyUser(privyUserAccount);
     } catch (error) {
       console.error("Failed to fetch privy user account:", error);
@@ -123,6 +155,7 @@ export default function BuyTokensCard() {
 
   return (
     <PlayFlipGameGeneric fadeIn rowGap={isTabletBreakpoint ? 36 : 48}>
+      {privyUser?.username && <ShareableLink username={privyUser.username} />}
       <Header1
         colorClass={ColorClass.Navy}
         textAlign="center"

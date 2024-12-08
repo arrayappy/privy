@@ -1,0 +1,71 @@
+.messageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.shareLinkContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  width: 100%;
+  max-width: 500px;
+  background: var(--beige-light);
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+.shareLink {
+  color: var(--navy);
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.shareLink:hover {
+  text-decoration: underline;
+}
+
+.copyButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--navy);
+}
+
+.copyButton:hover {
+  background: var(--beige);
+}
+
+.copyEmoji {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  transition: transform 0.2s ease;
+}
+
+.copyEmoji:hover {
+  transform: scale(1.1);
+}
+
+.copyMessage {
+  font-size: 14px;
+  color: var(--winter-green);
+  font-weight: 600;
+} 

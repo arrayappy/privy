@@ -9,11 +9,16 @@ import useBreakpoint from "src/hooks/useBreakpoint";
 import useInitialData from "src/hooks/useInitialData";
 import CreateUserForm from "./CreateUserForm";
 import BuyTokensCard from "./BuyTokensCard";
+import Body1 from "src/components/text/Body1";
 
 export default function ConnectWalletOrPlay() {
   const { publicKey } = useWallet();
   const { isMobileBreakpoint } = useBreakpoint();
-  const { isLoading, userExists } = useInitialData();
+  const { isLoading, userExists, refreshData } = useInitialData();
+
+  const handleCreateUserSuccess = () => {
+    refreshData();
+  };
 
   if (publicKey == null) {
     return (
@@ -33,15 +38,13 @@ export default function ConnectWalletOrPlay() {
   if (isLoading) {
     return (
       <ResponsiveContainer>
-        <div className={styles.container}>
-          <div>Loading...</div>
-        </div>
+        <Body1 textAlign='center'>Loading...</Body1>
       </ResponsiveContainer>
     );
   }
 
   if (!userExists) {
-    return <CreateUserForm onSuccess={() => null} />;
+    return <CreateUserForm onSuccess={handleCreateUserSuccess} />;
   }
 
   return <BuyTokensCard />;

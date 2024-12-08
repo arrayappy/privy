@@ -15,6 +15,7 @@ import ExternalLink from "src/components/links/ExternalLink";
 import TwitterIcon from "src/components/icons/TwitterIcon";
 import ColorValue from "src/types/enums/ColorValue";
 import GlobalClass from "src/types/enums/GlobalClass";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 function LeftButtons() {
   const { asPath } = useRouter();
@@ -51,6 +52,16 @@ function LeftButtons() {
 
 export default function HeaderDesktop() {
   const { isTabletExtraWideBreakpoint } = useBreakpoint();
+  const { publicKey, disconnect } = useWallet();
+  const router = useRouter();
+
+  const handleDisconnect = async () => {
+    if (publicKey) {
+      localStorage.removeItem(publicKey.toString());
+    }
+    await disconnect();
+    router.push('/');
+  };
 
   return (
     <ResponsiveContainer className={styles.container}>
@@ -72,6 +83,7 @@ export default function HeaderDesktop() {
                 isTabletExtraWideBreakpoint ? "Connect" : undefined
               }
               fontClass={FontClass.Header2}
+              onDisconnect={handleDisconnect}
             />
           </DelayRender>
         </div>

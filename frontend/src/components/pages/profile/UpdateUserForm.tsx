@@ -13,6 +13,8 @@ import FontClass from "src/types/enums/FontClass";
 import ButtonTheme from "src/types/enums/ButtonTheme";
 import PlayFlipGameGeneric from "src/components/pages/home/PlayFlipGameGeneric";
 import { updateUser } from "src/services/api";
+import Header2 from "../../text/Header2";
+import styles from "@/css/pages/home/PlayFlipGameStart.module.css";
 
 interface ProfileFormData {
   username: string;
@@ -27,6 +29,7 @@ export default function Profile() {
   const { privyClient, connection, privyUser } = useSolanaContext();
   const [loading, setLoading] = useState(false);
   const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (!connected) {
@@ -56,7 +59,7 @@ export default function Profile() {
 
       // Update password in the database
       if (password) {
-        const response1 = await fetch('/api/getSaltAndPubkey', {
+        const response1 = await fetch('/api/getSaltAndKeys', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -68,6 +71,8 @@ export default function Profile() {
       }
 
       console.log("Profile updated successfully");
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {
@@ -84,6 +89,12 @@ export default function Profile() {
       >
         Profile Settings
       </Header1>
+
+      {showSuccess && (
+        <Header2 className={styles.successMessage}>
+          Profile updated successfully!
+        </Header2>
+      )}
 
       <Form
         form={form}

@@ -22,6 +22,17 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
   const { asPath, push } = useRouter();
   const { disconnect, publicKey } = useWallet();
 
+  const handleDisconnect = async () => {
+    if (publicKey) {
+      localStorage.removeItem(publicKey.toString());
+    }
+    onHidePopover();
+    setTimeout(async () => {
+      await disconnect();
+      push("/");
+    }, 300);
+  };
+
   return (
     <div className={styles.popoverContent}>
       {publicKey == null ? (
@@ -49,13 +60,7 @@ function PopoverContent({ onHidePopover }: { onHidePopover: () => void }) {
           </TextButton>
           <TextButton
             fontClass={FontClass.Header2}
-            onClick={() => {
-              onHidePopover();
-              setTimeout(() => {
-                disconnect();
-                push("/");
-              }, 300);
-            }}
+            onClick={handleDisconnect}
             textTransform="uppercase"
           >
             Disconnect wallet
