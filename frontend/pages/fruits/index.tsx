@@ -14,85 +14,9 @@ import ButtonWithText from "src/components/buttons/ButtonWithText";
 import ButtonTheme from "src/types/enums/ButtonTheme";
 import useSolanaContext from "../../src/hooks/useSolanaContext";
 import withInitialData from "src/components/hoc/withInitialData";
+import Body2 from "../../src/components/text/Body2";
 
 const { Panel } = Collapse;
-
-const data = [
-  "Racing car sprays burning fuel into crowd.",
-  "Japanese princess to wed commoner.",
-  "Australian walks 100km after outback crash.",
-  "Man charged over missing wedding girl.",
-  "Los Angeles battles huge wildfires.",
-];
-
-const items = [
-  {
-    key: "0",
-    label: (
-      <Typography.Text className={FontClass.Header2}>
-        Header 0
-      </Typography.Text>
-    ),
-    content: (
-      <List
-        size="small"
-        bordered
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item>
-            <Typography.Text className={FontClass.Body1}>
-              {item}
-            </Typography.Text>
-          </List.Item>
-        )}
-      />
-    ),
-  },
-  {
-    key: "1",
-    label: (
-      <Typography.Text className={FontClass.Header2}>
-        Header 1
-      </Typography.Text>
-    ),
-    content: (
-      <List
-        size="small"
-        bordered
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item>
-            <Typography.Text className={FontClass.Body1}>
-              {item}
-            </Typography.Text>
-          </List.Item>
-        )}
-      />
-    ),
-  },
-  {
-    key: "2",
-    label: (
-      <Typography.Text className={FontClass.Header2}>
-        Header 2
-      </Typography.Text>
-    ),
-    content: (
-      <List
-        size="small"
-        bordered
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item>
-            <Typography.Text className={FontClass.Body1}>
-              {item}
-            </Typography.Text>
-          </List.Item>
-        )}
-      />
-    ),
-  },
-];
 
 interface Props {
   children?: React.ReactNode;
@@ -100,92 +24,194 @@ interface Props {
   rowGap?: number;
 }
 
-const parseDecryptedMessages = (messages: string) => {
-  const groupedMessages: Record<string, string[]> = {};
-
-  messages.split(",").forEach((message) => {
-    const [headerIndex, text] = message.split(":");
-    if (!groupedMessages[headerIndex]) {
-      groupedMessages[headerIndex] = [];
-    }
-    groupedMessages[headerIndex].push(text);
-  });
-
-  return groupedMessages;
-};
-
-const FruitsPage: NextPage = ({
-  children,
-  fadeIn = false,
-  rowGap,
-}: Props) => {
+const FruitsPage: NextPage = ({ children, fadeIn = false, rowGap }: Props) => {
   const router = useRouter();
   const { connected, publicKey } = useWallet();
   const [passphrase, setPassphrase] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { privyUser, setPrivyUser } = useSolanaContext();
+  const { privyUser, decryptedCategories } = useSolanaContext();
   const [decryptedMessages, setDecryptedMessages] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [noMessages, setNoMessages] = useState(false);
+  const [groupedMessages, setGroupedMessages] = useState<Record<string, string[]>>({});
+
   useEffect(() => {
-    if (!connected) {
-      router.push('/');
-    } else {
-      const storedPassphrase = localStorage.getItem(publicKey || "");
-      if (!storedPassphrase) {
-        setIsModalVisible(true);
-      } else {
+    if (connected && privyUser && publicKey) {
+      const storedPassphrase = localStorage.getItem(publicKey.toString());
+      if (storedPassphrase) {
+        console.log("Auto-fetching messages with stored passphrase");
         setPassphrase(storedPassphrase);
         fetchDecryptedMessages(storedPassphrase);
       }
     }
+  }, [privyUser, connected, publicKey]);
+
+  useEffect(() => {
+    if (!connected) {
+      router.push("/");
+    } else if (!isModalVisible) {
+      const storedPassphrase = localStorage.getItem(publicKey?.toString() || "");
+      if (!storedPassphrase) {
+        console.log("No stored passphrase, showing modal");
+        setIsModalVisible(true);
+      }
+    }
   }, [connected, publicKey, router]);
+
+  useEffect(() => {
+    const grouped = parseDecryptedMessages(decryptedMessages);
+    setGroupedMessages(grouped);
+
+    const hasMessages = Object.values(grouped).some((messages) => messages.length > 0);
+    setNoMessages(!hasMessages);
+  }, [decryptedMessages]);
 
   const handlePassphraseSubmit = async () => {
     if (!passphrase) return;
-    localStorage.setItem(publicKey || "", passphrase);
-    setIsModalVisible(false);
-    await fetchDecryptedMessages(passphrase);
-  };
-
-  const fetchDecryptedMessages = async (passphrase: string) => {
-    try {
-      const response = await fetch("/api/getDecryptedMessages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passphrase, messages: privyUser?.messages }),
-      });
-      const { decryptedMessages } = await response.json();
-      setDecryptedMessages(decryptedMessages);
-
-      console.log("Decrypted Messages:", decryptedMessages);
-    } catch (error) {
-      console.error("Error fetching decrypted messages:", error);
+    
+    const success = await fetchDecryptedMessages(passphrase);
+    if (success && decryptedMessages.length > 0) {
+      localStorage.setItem(publicKey?.toString() || "", passphrase);
+      setIsModalVisible(false);
+      setNoMessages(false);
+    } else if (success) {
+      setIsModalVisible(false);
+      setNoMessages(true);
+    } else {
+      alert("Incorrect passphrase, please try again.");
     }
   };
 
-  console.log("decryptedMessages", decryptedMessages);
-  // const groupedMessages = parseDecryptedMessages(decryptedMessages);
-  const groupedMessages = parseDecryptedMessages("0:hi,1:by,1:hey");
+  const fetchDecryptedMessages = async (passphrase: string) => {
+    setIsLoading(true);
+    try {
+      if (!privyUser?.messages || privyUser.messages.length === 0) {
+        console.log("No messages found in privyUser");
+        setDecryptedMessages([]);
+        return true;
+      }
 
-  // Filter items to only include those with messages
-  const filteredItems = items.filter(item => groupedMessages[item.key]);
+
+      const response = await fetch("/api/getDecryptedMessages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          passphrase,
+          messages: privyUser.messages
+        }),
+      });
+      
+      const data = await response.json();
+      console.log("API Response:", {
+        status: response.status,
+        hasDecryptedMessages: !!data.decryptedMessages,
+        messageCount: data.decryptedMessages?.length
+      });
+
+      if (response.status === 401) {
+        console.error("Incorrect passphrase");
+        return false;
+      }
+      
+      setDecryptedMessages(data.decryptedMessages);
+      return true;
+
+    } catch (error) {
+      console.error("Error in fetchDecryptedMessages:", error);
+      setDecryptedMessages([]);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const parseDecryptedMessages = (messages: string[]) => {
+    const groupedMessages: Record<string, string[]> = {};
+
+    messages.forEach((message) => {
+      const [headerIndex, text] = message.split(":");
+      if (!groupedMessages[headerIndex]) {
+        groupedMessages[headerIndex] = [];
+      }
+      groupedMessages[headerIndex].push(text);
+    });
+
+    return groupedMessages;
+  };
+
+  const items = decryptedCategories?.map((category, index) => ({
+    key: index.toString(),
+    label: (
+      <Typography.Text className={FontClass.Header2}>
+        {category.cat_name}
+      </Typography.Text>
+    ),
+    content: (
+      <List
+        size="small"
+        bordered
+        dataSource={groupedMessages[index.toString()] || []}
+        renderItem={(item) => (
+          <List.Item>
+            <Typography.Text className={FontClass.Body1}>
+              {item}
+            </Typography.Text>
+          </List.Item>
+        )}
+      />
+    ),
+  }));
+
+  const filteredItems = items?.filter(
+    (item) => groupedMessages[item.key] && groupedMessages[item.key].length > 0
+  );
 
   if (!connected) {
     return null;
   }
 
+  if (!privyUser || !decryptedCategories) {
+    return (
+      <>
+        <Header />
+        <ResponsiveContainer>
+          <div className={styles.container}>
+            <div style={{ display: "flex", justifyContent: "center", padding: "20px" }}>
+              <Body2
+                colorClass={ColorClass.Navy}
+                textAlign="center"
+                textTransform="uppercase"
+                style={{
+                  width: "200px",
+                }}
+              >
+                Loading user data...
+              </Body2>
+            </div>
+          </div>
+        </ResponsiveContainer>
+      </>
+    );
+  }
+
   return (
     <>
       <Modal
-        // title="Decrypt your messages"
         visible={isModalVisible}
         footer={null}
         onCancel={() => setIsModalVisible(false)}
       >
         <Form layout="vertical">
           <Form.Item
-            label={<span className={FontClass.Header2}>Enter passphrase to decrypt messages!</span>}
+            label={
+              <span className={FontClass.Header2}>
+                Enter passphrase to decrypt messages!
+              </span>
+            }
             name="passphrase"
-            rules={[{ required: true, message: "Please input your passphrase!" }]}
+            rules={[
+              { required: true, message: "Please input your passphrase!" },
+            ]}
           >
             <Input.Password
               className={FontClass.Body1}
@@ -215,32 +241,63 @@ const FruitsPage: NextPage = ({
       <Header />
       <ResponsiveContainer>
         <div className={styles.container}>
-          <Header1
-            colorClass={ColorClass.Navy}
-            textAlign="center"
-            textTransform="uppercase"
-          >
-            Fruits
-          </Header1>
           <Suspense fallback={null}>
-            <Collapse defaultActiveKey={["1"]}>
-              {filteredItems.map((item) => (
-                <Panel header={item.label} key={item.key}>
-                  <List
-                    size="small"
-                    bordered
-                    dataSource={groupedMessages[item.key]}
-                    renderItem={(message) => (
-                      <List.Item>
-                        <Typography.Text className={FontClass.Body1}>
-                          {message}
-                        </Typography.Text>
-                      </List.Item>
-                    )}
-                  />
-                </Panel>
-              ))}
-            </Collapse>
+            {isLoading ? (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  padding: "20px",
+                }}
+              >
+                <Body2
+                  colorClass={ColorClass.Navy}
+                  textAlign="center"
+                  textTransform="uppercase"
+                  style={{
+                    width: "200px",
+                  }}
+                >
+                  Loading...
+                </Body2>
+              </div>
+            ) : (
+              <>
+                {noMessages ? (
+                  <Typography.Text className={FontClass.Body1} style={{ textAlign: "center", display: "block", marginTop: "20px" }}>
+                    No messages yet.
+                  </Typography.Text>
+                ) : (
+                  <>
+                    <Header1
+                      colorClass={ColorClass.Navy}
+                      textAlign="center"
+                      textTransform="uppercase"
+                    >
+                      Fruits
+                    </Header1>
+                    <Collapse defaultActiveKey={["0"]}>
+                      {filteredItems?.map((item) => (
+                        <Panel header={item.label} key={item.key}>
+                          <List
+                            size="small"
+                            bordered
+                            dataSource={groupedMessages[item.key]}
+                            renderItem={(message) => (
+                              <List.Item>
+                                <Typography.Text className={FontClass.Body1}>
+                                  {message}
+                                </Typography.Text>
+                              </List.Item>
+                            )}
+                          />
+                        </Panel>
+                      ))}
+                    </Collapse>
+                  </>
+                )}
+              </>
+            )}
           </Suspense>
         </div>
       </ResponsiveContainer>

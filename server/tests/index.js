@@ -6,7 +6,7 @@ const API_URL = 'http://127.0.0.1:8081';
 (async () => {
   try {
     // Test data
-    const userAddr = "rusQnt24KNvkFkZmHopzrW9J1BNSBHK9tdu34ecY3fr";
+    const userAddr = "7BKfTrqwC1Eo6eq43NnX8NJg32U6brYvLTWF9Fm8jX5s";
     const oldUsername = "arrayappy";
     const newUsername = "naidu";
     const password_salt = "key1";
@@ -22,32 +22,41 @@ const API_URL = 'http://127.0.0.1:8081';
       console.error("Status Error:", error.response?.data || error.message);
     }
 
-    // // Test CreateUser
-    console.log("\nTesting CreateUser...");
+    // Test GetDbUser
+    console.log("\nTesting GetDbUser...");
     try {
-      const createUserResponse = await axios.post(`${API_URL}/create_user`, {
-        user_addr: userAddr,
-        user_name: oldUsername,
-        password_salt: password_salt,
-        password_pubkey: password_pubkey
-      });
-      console.log("CreateUser Response:", createUserResponse.data);
+      const getDbUserResponse = await axios.get(`${API_URL}/get_db_user?user_addr=${userAddr}`);
+      console.log("GetDbUser Response:", getDbUserResponse.data);
     } catch (error) {
-      console.error("CreateUser Error:", error.response?.data || error.message);
+      console.error("GetDbUser Error:", error.response?.data || error.message);
     }
 
-    // Test GetUser
-    console.log("\nTesting GetUser...");
-    try {
-      const getUserResponse = await axios.post(`${API_URL}/get_user`, {
-        user_name: oldUsername,
-        cat_idx: 0,
-        fingerprint_id: "finger01"
-      });
-      console.log("GetUser Response:", getUserResponse.data);
-    } catch (error) {
-      console.error("GetUser Error:", error.response?.data || error.message);
-    }
+    // // // Test CreateUser
+    // console.log("\nTesting CreateUser...");
+    // try {
+    //   const createUserResponse = await axios.post(`${API_URL}/create_user`, {
+    //     user_addr: userAddr,
+    //     user_name: oldUsername,
+    //     password_salt: password_salt,
+    //     password_pubkey: password_pubkey
+    //   });
+    //   console.log("CreateUser Response:", createUserResponse.data);
+    // } catch (error) {
+    //   console.error("CreateUser Error:", error.response?.data || error.message);
+    // }
+
+    // // Test GetUser
+    // console.log("\nTesting GetUser...");
+    // try {
+    //   const getUserResponse = await axios.post(`${API_URL}/get_user`, {
+    //     user_name: oldUsername,
+    //     cat_idx: 0,
+    //     fingerprint_id: "finger01"
+    //   });
+    //   console.log("GetUser Response:", getUserResponse.data);
+    // } catch (error) {
+    //   console.error("GetUser Error:", error.response?.data || error.message);
+    // }
 
     // // Test UpdateUser
     // console.log("\nTesting UpdateUser...");
@@ -94,15 +103,15 @@ const API_URL = 'http://127.0.0.1:8081';
     // }
 
     // // Test DeleteUser (run this last)
-    console.log("\nTesting DeleteUser...");
-    try {
-      const deleteUserResponse = await axios.post(`${API_URL}/delete_user`, {
-        user_addr: userAddr
-      });
-      console.log("DeleteUser Response:", deleteUserResponse.data);
-    } catch (error) {
-      console.error("DeleteUser Error:", error.response?.data || error.message);
-    }
+    // console.log("\nTesting DeleteUser...");
+    // try {
+    //   const deleteUserResponse = await axios.post(`${API_URL}/delete_user`, {
+    //     user_addr: userAddr
+    //   });
+    //   console.log("DeleteUser Response:", deleteUserResponse.data);
+    // } catch (error) {
+    //   console.error("DeleteUser Error:", error.response?.data || error.message);
+    // }
 
   } catch (err) {
     if (err.response) {

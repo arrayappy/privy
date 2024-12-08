@@ -3,7 +3,8 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import useInitialData from 'src/hooks/useInitialData';
 import ConnectWalletOrPlay from '../pages/home/ConnectWalletOrPlay';
 import { useEffect } from 'react';
-
+import Body1 from '../text/Body1';
+import HeaderLogo from '../header/HeaderLogo';
 export default function withInitialData<P extends object>(
   WrappedComponent: React.ComponentType<P>
 ) {
@@ -37,8 +38,9 @@ export default function withInitialData<P extends object>(
 
     if (isLoading) {
       return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-          Loading...
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <HeaderLogo />
+          <Body1 textAlign='center' style={{ marginTop: '1rem' }}>Loading...</Body1>
         </div>
       );
     }

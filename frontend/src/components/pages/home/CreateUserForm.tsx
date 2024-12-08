@@ -21,7 +21,7 @@ interface CreateUserFormProps {
 export default function CreateUserForm({ onSuccess }: CreateUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { publicKey, sendTransaction } = useWallet();
-  const { connection, privyClient } = useSolanaContext();
+  const { connection, privyClient, setPrivyUser } = useSolanaContext();
   const { isTabletBreakpoint } = useBreakpoint();
   const [form] = Form.useForm();
 
@@ -33,36 +33,45 @@ export default function CreateUserForm({ onSuccess }: CreateUserFormProps) {
 
     setIsLoading(true);
     try {
-      const response1 = await fetch('/api/getSaltAndKeys', {
-        method: 'POST',
+      const response1 = await fetch("/api/getSaltAndKeys", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ passphrase: values.password }),
       });
       const { password_salt, publicKeyPem } = await response1.json();
-      console.log('password_salt', password_salt);
-      console.log('publicKeyPem', publicKeyPem);
-      console.log(await createUser(publicKey.toBase58(), values.username, password_salt, publicKeyPem));
+      console.log("password_salt", password_salt);
+      console.log("publicKeyPem", publicKeyPem);
+      console.log(
+        await createUser(
+          publicKey.toBase58(),
+          values.username,
+          password_salt,
+          publicKeyPem
+        )
+      );
 
-      const categories = [{
-        cat_name: "Default",
-        passkey: "",
-        enabled: true,
-        single_msg: false,
-      }];
+      const categories = [
+        {
+          cat_name: values.username,
+          passkey: "",
+          enabled: true,
+          single_msg: false,
+        },
+      ];
       const response2 = await fetch("/api/getEncryptedCategories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key: password_salt, categories }),
       });
       const { encryptedCategories } = await response2.json();
-      console.log('encryptedCategories', encryptedCategories);
+      console.log("encryptedCategories", encryptedCategories);
       const tx = await privyClient.createUserTx(
         publicKey,
         values.username,
         encryptedCategories,
-        new BN(0),
+        new BN(0)
       );
       const signature = await sendTransaction(tx, connection!);
       await connection!.confirmTransaction(signature, "confirmed");
