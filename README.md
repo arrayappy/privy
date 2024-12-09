@@ -21,6 +21,8 @@
 
 Privy is a Solana application for receiving spam-free private messages through a sharable user link. The receiver pays the transaction fees using a relayer backend service while ensuring client-side message encryption. The project implements token management, categorization, passkey mechanisms, link disabling, and single-message reception.
 
+**Devnet Address**: [`priHJ6iTp11dw7nU8QoFZ4msaEMyk6GnBKfvV3rpNE5`](https://explorer.solana.com/address/priHJ6iTp11dw7nU8QoFZ4msaEMyk6GnBKfvV3rpNE5?cluster=devnet)
+
 - [Solana program for Privy](./program/README.md)
 - [Backend code for Privy](./server/README.md)
 - [TypeScript SDK for Privy](https://github.com/arrayappy/privy-sdk)
