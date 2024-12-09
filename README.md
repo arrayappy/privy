@@ -23,7 +23,7 @@ Privy is a Solana application for receiving spam-free private messages through a
 
 - [Solana program for Privy](./program/README.md)
 - [Backend code for Privy](./server/README.md)
-- [TypeScript SDK for Privy](./sdk/README.md)
+- [TypeScript SDK for Privy](https://github.com/arrayappy/privy-sdk)
 - [Frontend code for Privy](./frontend/README.md)
 
 ### User Flow
@@ -166,8 +166,6 @@ This repo contains the Solana program source code and client-side program tests 
 
 ## Future Scope
 
-1. Optimize on-chain program for better transaction fees and conduct an audit
-2. Improve data storage decisions for mainnet beta
-3. Add support for SPL tokens with Pyth Oracle
-4. Explore zk-compression when available for potential mainnet deployment
-5. Adopt wallet standard options for data encryption and decryption if introduced
+1. Optimise program's compute units
+2. Wallet standard encryption (Onchain)
+3. Fully onchain with ZK Compression

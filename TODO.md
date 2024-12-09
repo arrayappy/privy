@@ -50,13 +50,23 @@
 
 ### Frontend
 - [x] Project inital setup + cleanup
-- [ ] Frontend Screens
-- [ ] Frontend Wallet Connections
-- [ ] Frontend APIs
-- [ ] Work on receiver and sender UI screens
-- [ ] Making API calls and complete functionality
-
-### Future
-- [ ] Improve DB methods with generic traits
-- [ ] Tokens based on USDC with Pyth SDK + SPL Tokens
-- [ ] Wallet standard encryption
+- [x] Fruits page flow (read)
+    - [x] Move categories decryption to home and update categorySettings form
+    - [x] Use the same categories in fruits page as well 
+    - [x] Unset localStorage item when disconnect
+    - [x] Instead of Default - use "" and use privyUser.username
+- [x] Send page flow (read and write)
+- [x] Move home page code to common and reuse it everywhere
+- [x] Wallet Icon showing [20]
+- [x] Profile Edit page flow
+    - [x] Update categories [WIP]
+    - [x] Update username
+- [x] Sign up flow
+    - [x] Get DB user as well
+    - [x] Create User (CreateUserTx, Store DB) 
+    - [x] Buy Tokens
+- [x] Info page data
+- [x] Final things:
+    - [x] Create categories to group messsages
+    - [x] Share link on home page
+    - [x] Table should have sharable link with copy button
