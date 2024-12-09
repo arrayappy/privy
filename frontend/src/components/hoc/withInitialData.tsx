@@ -40,7 +40,7 @@ export default function withInitialData<P extends object>(
       return (
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
           <HeaderLogo />
-          <Body1 textAlign='center' style={{ marginTop: '1rem' }}>Loading...</Body1>
+          <Body1 textAlign='center'>Loading...</Body1>
         </div>
       );
     }

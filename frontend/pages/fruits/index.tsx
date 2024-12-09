@@ -181,9 +181,6 @@ const FruitsPage: NextPage = ({ children, fadeIn = false, rowGap }: Props) => {
                 colorClass={ColorClass.Navy}
                 textAlign="center"
                 textTransform="uppercase"
-                style={{
-                  width: "200px",
-                }}
               >
                 Loading user data...
               </Body2>
@@ -254,9 +251,9 @@ const FruitsPage: NextPage = ({ children, fadeIn = false, rowGap }: Props) => {
                   colorClass={ColorClass.Navy}
                   textAlign="center"
                   textTransform="uppercase"
-                  style={{
-                    width: "200px",
-                  }}
+                  // style={{
+                  //   width: "200px",
+                  // }}
                 >
                   Loading...
                 </Body2>

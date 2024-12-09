@@ -83,7 +83,7 @@ export default function HeaderDesktop() {
                 isTabletExtraWideBreakpoint ? "Connect" : undefined
               }
               fontClass={FontClass.Header2}
-              onDisconnect={handleDisconnect}
+              // onClick={handleDisconnect}
             />
           </DelayRender>
         </div>

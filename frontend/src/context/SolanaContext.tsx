@@ -110,7 +110,7 @@ export default function SolanaContextProvider({ children }: Props) {
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter({ autoConnect: true }),
-      new SolflareWalletAdapter({ autoConnect: true }),
+      new SolflareWalletAdapter(),
     ],
     []
   );

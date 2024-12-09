@@ -44,6 +44,7 @@ export default function notify({
       typeof description === "string"
         ? description
         : // eslint-disable-next-line react/jsx-no-useless-fragment
+        // @ts-ignore
           ReactDOMServer.renderToStaticMarkup(<>{description}</>)
     }`,
     {

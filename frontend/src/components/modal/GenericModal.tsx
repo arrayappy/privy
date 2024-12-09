@@ -56,9 +56,11 @@ export default function GenericModal({
   }
 
   return (
+    // @ts-ignore
     <>
       {isShown && <BackgroundOverlay />}
       {ReactDOM.createPortal(
+        // @ts-ignore
         <div
           className={styles.container}
           style={{
