@@ -109,7 +109,7 @@ export default function UserMessagePage() {
   return (
     <>
       <Head>
-        <title>{`Send Private Message via Blockchain to ${username || ''}`}</title>
+        <title>{`Send private message to ${username || ''} over blockchain`}</title>
       </Head>
       <ResponsiveContainer>
         <div style={{ 

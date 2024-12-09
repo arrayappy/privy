@@ -1,7 +1,7 @@
 import { Html, Head, Main, NextScript } from "next/document";
 
 const META_DESCRIPTION =
-  "Solana's best coin flip app. Double your SOL with just a single coin flip!";
+  "A secure channel to receive private messages via blockchain.";
 export default function Document() {
   return (
     <Html>
