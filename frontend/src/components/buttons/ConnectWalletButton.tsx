@@ -59,7 +59,7 @@ type Props = {
 
 export default function ConnectWalletButton({
   buttonTheme,
-  disconnectedLabel = "Connect Wallet",
+  disconnectedLabel = "Connect Devnet",
   fontClass,
   width,
 }: Props) {
