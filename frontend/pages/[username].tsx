@@ -16,6 +16,7 @@ import HeaderLogo from "src/components/header/HeaderLogo";
 import Link from "next/link";
 import Body1 from "src/components/text/Body1";
 import TextArea from "../src/components/input/TextArea";
+import Head from "next/head";
 
 interface MessageFormData {
   message: string;
@@ -106,104 +107,109 @@ export default function UserMessagePage() {
   const shouldHideForm = success || (error && !userInfo?.passkey_enabled);
 
   return (
-    <ResponsiveContainer>
-      <div style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        marginBottom: '2rem'
-      }}>
-        <Link href="/">
-          <a>
-            <HeaderLogo />
-          </a>
-        </Link>
-        <Body1 colorClass={ColorClass.Navy} textAlign="center">
-          A secure channel to send private messages.
-        </Body1>
-      </div>
+    <>
+      <Head>
+        <title>{`Send Private Message via Blockchain to ${username || ''}`}</title>
+      </Head>
+      <ResponsiveContainer>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          marginBottom: '2rem'
+        }}>
+          <Link href="/">
+            <a>
+              <HeaderLogo />
+            </a>
+          </Link>
+          <Body1 colorClass={ColorClass.Navy} textAlign="center">
+            A secure channel to send private messages.
+          </Body1>
+        </div>
 
-      <PlayFlipGameGeneric fadeIn rowGap={isTabletBreakpoint ? 36 : 48}>
-        <Header1
-          colorClass={ColorClass.Navy}
-          textAlign="center"
-          textTransform="uppercase"
-        >
-          {`Send Message to ${username || ''}`}
-        </Header1>
-
-        {!shouldHideForm && (
-          <Form
-            form={form}
-            onFinish={handleSubmit}
-            layout="vertical"
-            style={{
-              width: "90%",
-              maxWidth: isTabletBreakpoint ? 400 : 500,
-              margin: "0 auto",
-              padding: "20px",
-            }}
+        <PlayFlipGameGeneric fadeIn rowGap={isTabletBreakpoint ? 36 : 48}>
+          <Header1
+            colorClass={ColorClass.Navy}
+            textAlign="center"
+            textTransform="uppercase"
           >
-            <Form.Item
-              label={<span className={FontClass.Header2}>Enter your message</span>}
-              name="message"
-              rules={[
-                { required: true, message: "Please input your message!" },
-              ]}
-            >
-              <TextArea
-                className={FontClass.Body1}
-                placeholder="Type your message here"
-                rows={4}
-                onChange={() => {}}
-                value={form.getFieldValue('message') || ''}
-              />
-            </Form.Item>
+            {`Send Message to ${username || ''}`}
+          </Header1>
 
-            {userInfo?.passkey_enabled && (
+          {!shouldHideForm && (
+            <Form
+              form={form}
+              onFinish={handleSubmit}
+              layout="vertical"
+              style={{
+                width: "90%",
+                maxWidth: isTabletBreakpoint ? 400 : 500,
+                margin: "0 auto",
+                padding: "20px",
+              }}
+            >
               <Form.Item
-                label={<span className={FontClass.Header2}>Passkey</span>}
-                name="passkey"
+                label={<span className={FontClass.Header2}>Enter your message</span>}
+                name="message"
                 rules={[
-                  { required: true, message: "Please input the passkey!" },
+                  { required: true, message: "Please input your message!" },
                 ]}
               >
-                <Input
+                <TextArea
                   className={FontClass.Body1}
-                  size="large"
-                  placeholder="Enter passkey"
+                  placeholder="Type your message here"
+                  rows={4}
+                  onChange={() => {}}
+                  value={form.getFieldValue('message') || ''}
                 />
               </Form.Item>
-            )}
 
-            <Form.Item>
-              <div style={{ display: "flex", justifyContent: "center" }}>
-                <ButtonWithText
-                  buttonTheme={ButtonTheme.Yellow}
-                  fontClass={FontClass.Header1}
-                  onClick={form.submit}
-                  textTransform="uppercase"
-                  disabled={loading}
-                  style={{
-                    width: "100%",
-                    maxWidth: isTabletBreakpoint ? 270 : 300,
-                  }}
+              {userInfo?.passkey_enabled && (
+                <Form.Item
+                  label={<span className={FontClass.Header2}>Passkey</span>}
+                  name="passkey"
+                  rules={[
+                    { required: true, message: "Please input the passkey!" },
+                  ]}
                 >
-                  Send Message
-                </ButtonWithText>
-              </div>
-            </Form.Item>
-          </Form>
-        )}
+                  <Input
+                    className={FontClass.Body1}
+                    size="large"
+                    placeholder="Enter passkey"
+                  />
+                </Form.Item>
+              )}
 
-        {error && (
-          <Body1 textAlign="center" colorClass={ColorClass.Rust}>{error}</Body1>
-        )}
+              <Form.Item>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <ButtonWithText
+                    buttonTheme={ButtonTheme.Yellow}
+                    fontClass={FontClass.Header1}
+                    onClick={form.submit}
+                    textTransform="uppercase"
+                    disabled={loading}
+                    style={{
+                      width: "100%",
+                      maxWidth: isTabletBreakpoint ? 270 : 300,
+                    }}
+                  >
+                    Send Message
+                  </ButtonWithText>
+                </div>
+              </Form.Item>
+            </Form>
+          )}
 
-        {success && (
-          <Body1 textAlign="center">{success}</Body1>
-        )}
-      </PlayFlipGameGeneric>
-    </ResponsiveContainer>
+          {error && (
+            <Body1 textAlign="center" colorClass={ColorClass.Rust}>{error}</Body1>
+          )}
+
+          {success && (
+            <Body1 textAlign="center">{success}</Body1>
+          )}
+        </PlayFlipGameGeneric>
+      </ResponsiveContainer>
+    </>
   );
 }
