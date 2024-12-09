@@ -1167,7 +1167,7 @@
 
 "@privy/sdk@git+https://github.com/arrayappy/privy-sdk.git#main":
   version "0.0.1"
-  resolved "git+https://github.com/arrayappy/privy-sdk.git#72876a311a46520bbac8226a331cd88c7b48ea33"
+  resolved "git+https://github.com/arrayappy/privy-sdk.git#8dc74a23cfdb817fd0fd7d8360b5c15df453afde"
   dependencies:
     "@coral-xyz/anchor" "0.30.0"
     "@solana/web3.js" "^1.95.1"
